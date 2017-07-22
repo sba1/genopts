@@ -226,7 +226,6 @@ class GenerateMXValidatorVisitor(Visitor):
         print("\t\t\treturn 0;")
         print("\t\t}")
         print("\t}")
-        pass
 
     def visit_command(self, n):
         self.cmds.append(n)
@@ -246,12 +245,11 @@ class GenerateCommandValidatorVisitor(Visitor):
 ################################################################################
 
 parsed = parse_pattern(pattern)
-
-print(parsed)
+#print(parsed)
 
 names = []
 accept(parsed, CollectNamesVisitor(names))
-print(names)
+#print(names)
 
 def is_flag(str):
     return str[0] == '-'
@@ -310,6 +308,9 @@ class GenerateParserVisitor(Visitor):
         self.write_strcmp_epilogue()
 
 gf = GenFile()
+
+gf.writeline("#include <stdio.h>")
+gf.writeline("#include <string.h>")
 
 # Generate the struct cli by calling the generate
 # visitor with a /dev/zero sink. This will fill the
