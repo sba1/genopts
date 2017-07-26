@@ -191,21 +191,6 @@ def navigate(n, visitor):
 
 ################################################################################
 
-class CollectNamesVisitor(Visitor):
-    """
-    Visitor to collect the names of the command/args in a flat list.
-    The lists contain tuples with the name of the command/option and
-    the name of the argument.
-    """
-    def __init__(self, names):
-        self.names = names
-    def visit_command(self, n):
-        self.names.append((n.command, None))
-    def visit_command_with_arg(self, n):
-        self.names.append((n.command, n.arg))
-
-################################################################################
-
 class GenerateMXValidatorVisitor(Visitor):
     """
     Visitor to generate code for validation of multual exclusions.
@@ -251,10 +236,6 @@ class GenerateCommandValidatorVisitor(Visitor):
 
 parsed = parse_pattern(pattern)
 #print(parsed)
-
-names = []
-navigate(parsed, CollectNamesVisitor(names))
-#print(names)
 
 def is_flag(str):
     return str[0] == '-'
