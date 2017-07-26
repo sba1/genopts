@@ -269,7 +269,21 @@ def makename(o):
     sys.exit("Wrong class type")
 
 class GenerateParserVisitor(Visitor):
+    """
+    Vistor that generates the parsing of the command line arguments
+    """
     def __init__(self, gf, field_names):
+        """
+        Constructs the visitor.
+
+        Parameters
+        ----------
+        gf: GenFile
+            Where the generated code is written to
+        field_names:
+            A dictionary in which all required field names of the struct
+            are stored including their type.
+        """
         self.gf = gf
         self.first = True
         self.field_names = field_names
