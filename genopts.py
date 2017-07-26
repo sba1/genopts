@@ -141,7 +141,6 @@ def parse_pattern(pattern):
 class GenFile:
     def __init__(self, f=sys.stdout):
         self.f = f
-#        self.f = open('/dev/zero', 'w')
         self.level = 0
 
     def writeline(self, str=""):
