@@ -347,7 +347,7 @@ gf.writeline("#include <string.h>")
 # visitor with a /dev/zero sink. This will fill the
 # field_names dictionary
 field_names = dict()
-navigate(parsed, GenerateParserVisitor(GenFile(f=open("/tmp/huhuhu", "w")), field_names))
+navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names))
 gf.writeline()
 gf.writeline("struct cli")
 gf.writeline("{")
