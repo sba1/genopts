@@ -168,16 +168,21 @@ class Visitor:
     def visit_command_with_arg(self, n):
         pass
 
-def accept(n, visitor):
+# Similar to accept() but does implement the naviation
+# in a monolitic fashion
+def navigate(n, visitor):
+    """
+    Navigate through the hierarchy starting at n and call the visitor
+    """
     if isinstance(n, Pattern):
         visitor.enter_pattern(n)
         for e in n.list:
-            accept(e, visitor)
+            navigate(e, visitor)
         visitor.leave_pattern(n)
     elif isinstance(n, Optional):
         visitor.enter_optional(n)
         for e in n.list:
-            accept(e, visitor)
+            navigate(e, visitor)
         visitor.leave_optional(n)
     elif isinstance(n, Command):
         visitor.visit_command(n)
@@ -248,7 +253,7 @@ parsed = parse_pattern(pattern)
 #print(parsed)
 
 names = []
-accept(parsed, CollectNamesVisitor(names))
+navigate(parsed, CollectNamesVisitor(names))
 #print(names)
 
 def is_flag(str):
@@ -342,7 +347,7 @@ gf.writeline("#include <string.h>")
 # visitor with a /dev/zero sink. This will fill the
 # field_names dictionary
 field_names = dict()
-accept(parsed, GenerateParserVisitor(GenFile(f=open("/tmp/huhuhu", "w")), field_names))
+navigate(parsed, GenerateParserVisitor(GenFile(f=open("/tmp/huhuhu", "w")), field_names))
 gf.writeline()
 gf.writeline("struct cli")
 gf.writeline("{")
@@ -365,7 +370,7 @@ gf.writeline("for (i=0;i < argc; i++)")
 gf.writeline("{")
 
 field_names = dict()
-accept(parsed, GenerateParserVisitor(gf, field_names))
+navigate(parsed, GenerateParserVisitor(gf, field_names))
 
 gf.writeline("}")
 gf.writeline("}")
@@ -374,7 +379,7 @@ gf.writeline()
 # Generates the validation function
 gf.writeline("int validate(struct cli *cli)")
 gf.writeline("{")
-accept(parsed, GenerateCommandValidatorVisitor())
-accept(parsed, GenerateMXValidatorVisitor())
+navigate(parsed, GenerateCommandValidatorVisitor())
+navigate(parsed, GenerateMXValidatorVisitor())
 gf.writeline("return 1;")
 gf.writeline("}")
