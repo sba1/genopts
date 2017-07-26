@@ -273,12 +273,18 @@ class GenerateParserVisitor(Visitor):
         self.gf = gf
         self.first = True
         self.field_names = field_names
+        self.cur_command = 0
 
     def write_strcmp_prologue(self, str):
         self.gf.writeline('if (!strcmp("{0}", argv[i]))'.format(str))
         self.gf.writeline('{')
     def write_strcmp_epilogue(self):
         self.gf.writeline('}')
+
+    def remember_pos(self, field_name):
+        cur_command_name = field_name + "_cmd"
+        self.field_names[cur_command_name] = "int"
+        self.gf.writeline("cli->{0} = cur_command;".format(cur_command_name))
 
     def visit_command(self, n):
         cmd = n.command
@@ -291,6 +297,11 @@ class GenerateParserVisitor(Visitor):
             pos_name = field_name + "_pos"
             self.field_names[pos_name] = "int"
             self.gf.writeline("cli->{0} = i;".format(pos_name))
+            self.gf.writeline("cur_command = {0};".format(self.cur_command))
+            # This was a proper command, level up command index
+            self.cur_command = self.cur_command + 1
+        else:
+            self.remember_pos(field_name)
 
         self.write_strcmp_epilogue()
 
@@ -304,6 +315,7 @@ class GenerateParserVisitor(Visitor):
 
         self.gf.writeline("if (++i == argc) break;")
         self.gf.writeline("cli->{0} = argv[i];".format(field_name))
+        self.remember_pos(field_name)
 
         self.write_strcmp_epilogue()
 
@@ -334,6 +346,7 @@ gf.writeline()
 gf.writeline("void parse(int argc, char *argv[], struct cli *cli)")
 gf.writeline("{")
 gf.writeline("int i;")
+gf.writeline("int cur_command = -1;")
 gf.writeline("for (i=0;i < argc; i++)")
 gf.writeline("{")
 
