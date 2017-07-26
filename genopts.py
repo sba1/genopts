@@ -329,6 +329,7 @@ gf.writeline("#include <string.h>")
 # field_names dictionary
 field_names = dict()
 accept(parsed, GenerateParserVisitor(GenFile(f=open("/tmp/huhuhu", "w")), field_names))
+gf.writeline()
 gf.writeline("struct cli")
 gf.writeline("{")
 for k in field_names:
@@ -338,7 +339,6 @@ for k in field_names:
         space = ''
     gf.writeline("{0}{1}{2};".format(t, space, k))
 gf.writeline("};")
-gf.writeline()
 
 # Generate a function that parses the command line and populates
 # the struct cli. It does not yet make verification
