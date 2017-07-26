@@ -141,6 +141,7 @@ def parse_pattern(pattern):
 class GenFile:
     def __init__(self, f=sys.stdout):
         self.f = f
+        # Stores the indendation level
         self.level = 0
 
     def writeline(self, str=""):
