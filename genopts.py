@@ -20,24 +20,32 @@ pattern2 = "submodule [--quiet] update [--init] [--remote] [-N|--no-fetch] [--[n
 ################################################################################
 
 class Command:
-    def __init__(self, command):
+    """
+    A command contains a command string, a list of options (that may be empty)
+    and an optional subcommand.
+    """
+    def __init__(self, command, options, subcommand):
         self.command = command
+        self.options = options # List
+        self.subcommand = subcommand
     def __repr__(self):
-        return "Command("+self.command+")"
+        if self.subcommand != None:
+            subcommand = ", " + repr(self.subcommand)
+        else:
+            subcommand = ""
+        return "Command(" + self.command + ", " + repr(self.options) + subcommand + ')'
 
-class Arg:
-    def __init__(self, arg):
-        self.arg = arg
-    def __repr__(self):
-        return "Arg("+self.arg+")"
-
-class CommandWithArg:
+class OptionWithArg:
     """Contains an option with args"""
     def __init__(self, command, arg):
         self.command = command
         self.arg = arg
     def __repr__(self):
-        return "CommandWithArg(" + self.command + ", " + self.arg + ")"
+        if self.arg == None:
+            arg = ""
+        else:
+            arg = ", " + self.arg
+        return "OptionWithArg(" + self.command + arg + ")"
 
 class Optional:
     """Contains a set of mutual exlusive options"""
@@ -54,17 +62,56 @@ class Pattern:
 
 ################################################################################
 
-def parse_command(command):
+def skip_spaces(text):
+    if len(text) == 0: return text
+
+    for i, c in enumerate(text):
+        if c != ' ': break
+    return text[i:]
+
+def parse_command_token(command):
+    """Parse a command token and return it and and the remainder"""
     for i, c in enumerate(command):
         if c == ' ':
             break
         if c == '[':
-            return None, None
+            break
         if c == '|':
-            return None, None
+            break
         if c == ']':
             break
+    if i==0:
+        return None, None
+
     return command[i:], command[:i]
+
+def parse_command(command):
+    rem, command_tk = parse_command_token(command)
+    if rem is None:
+        return None, None
+
+    options = []
+    subcommand = []
+
+    while rem is not None and len(rem) != 0:
+        rem = skip_spaces(rem)
+        if rem is None:
+            break
+
+        # Try command first
+        new_rem, subcommand = parse_command(rem)
+        if new_rem is not None:
+            rem = new_rem
+            #rem = ""
+            break
+
+        # Then optional
+        new_rem, optional = parse_optional(rem)
+        if new_rem is not None:
+            options.append(optional)
+        rem = new_rem
+
+    return rem, Command(command_tk, options, subcommand)
 
 def parse_arg(arg):
     is_arg = False
@@ -82,7 +129,7 @@ def parse_arg(arg):
     return rem[i+1:], rem[:i]
 
 def parse_command_with_arg(command_with_arg):
-    rem, command = parse_command(command_with_arg)
+    rem, command = parse_command_token(command_with_arg)
     if rem == None:
         return None, None
     rem = skip_spaces(rem)
@@ -91,21 +138,21 @@ def parse_command_with_arg(command_with_arg):
     rem, arg = parse_arg(rem)
     if rem == None:
         return None, None
-    return rem, CommandWithArg(command, arg)
+    return rem, OptionWithArg(command, arg)
 
 def parse_optional(optional):
-    if optional[0] != '[': return None
+    if optional[0] != '[': return None, None
     rem = optional[1:]
     l = []
     while len(rem) > 0 and rem[0] != ']':
         elm = None
         new_rem, elm = parse_command_with_arg(rem)
+
         if new_rem == None:
-            rem, command = parse_command(rem)
-            elm = Command(command)
-        else:
-            rem = new_rem;
-        if rem is None: return None
+            new_rem, command = parse_command_token(rem)
+            elm = OptionWithArg(command, None)
+        if new_rem is None: return None
+        rem = new_rem
         l.append(elm)
 
         rem = skip_spaces(rem)
@@ -114,13 +161,6 @@ def parse_optional(optional):
     if rem[0] != ']': return None
     return rem[1:], Optional(l)
 
-def skip_spaces(text):
-    if len(text) == 0: return text
-
-    for i, c in enumerate(text):
-        if c != ' ': break
-    return text[i:]
-
 def parse_pattern(pattern):
     rem = pattern
     l = []
@@ -128,7 +168,7 @@ def parse_pattern(pattern):
         rem = skip_spaces(rem)
         next_rem, command = parse_command(rem)
         if next_rem is not None:
-            l.append(Command(command))
+            l.append(command)
         else:
             next_rem, optional = parse_optional(rem)
             l.append(optional)
@@ -165,7 +205,7 @@ class Visitor:
         pass
     def visit_command(self, n):
         pass
-    def visit_command_with_arg(self, n):
+    def visit_option_with_arg(self, n):
         pass
 
 # Similar to accept() but does implement the naviation
@@ -186,8 +226,10 @@ def navigate(n, visitor):
         visitor.leave_optional(n)
     elif isinstance(n, Command):
         visitor.visit_command(n)
-    elif isinstance(n, CommandWithArg):
-        visitor.visit_command_with_arg(n)
+        for e in n.options:
+            navigate(e, visitor)
+    elif isinstance(n, OptionWithArg):
+        visitor.visit_option_with_arg(n)
 
 ################################################################################
 
@@ -217,10 +259,7 @@ class GenerateMXValidatorVisitor(Visitor):
         print("\t\t}")
         print("\t}")
 
-    def visit_command(self, n):
-        self.cmds.append(n)
-
-    def visit_command_with_arg(self, n):
+    def visit_option_with_arg(self, n):
         self.cmds.append(n)
 
 ################################################################################
@@ -250,8 +289,11 @@ def makename(o):
     """
     if isinstance(o, Command):
         return makecname(o.command)
-    elif isinstance(o, CommandWithArg):
-        return makecname(o.arg)
+    elif isinstance(o, OptionWithArg):
+        if o.arg is not None:
+            return makecname(o.arg)
+        else:
+            return makecname(o.command)
     sys.exit("Wrong class type")
 
 class GenerateParserVisitor(Visitor):
@@ -305,7 +347,7 @@ class GenerateParserVisitor(Visitor):
 
         self.write_strcmp_epilogue()
 
-    def visit_command_with_arg(self, n):
+    def visit_option_with_arg(self, n):
         self.write_strcmp_prologue(n.command)
 
         field_name = makename(n)
