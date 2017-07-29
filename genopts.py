@@ -279,7 +279,7 @@ class GenerateCommandValidatorVisitor(Visitor):
         assert len(self.option_cmd_parents[n]) == 1
         gf.writeline("if (cli->{0} != {1})".format(cur_command_name, self.option_cmd_parents[n][0]))
         gf.writeline("{")
-        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command)\");".format(n.command,self.cur_command_name))
+        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command,self.cur_command_name))
         gf.writeline("return 0;")
         gf.writeline("}")
 
