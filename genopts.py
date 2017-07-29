@@ -12,6 +12,7 @@
 
 from __future__ import print_function
 
+import collections
 import sys
 
 pattern = "commit [-a | --interactive | --patch]  [-F <file> | -m <msg>] [--reset-author]"
@@ -373,10 +374,12 @@ gf.writeline("#include <string.h>")
 # field_names dictionary
 field_names = dict()
 navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names))
+sorted_field_names = sorted([k for k in field_names])
+
 gf.writeline()
 gf.writeline("struct cli")
 gf.writeline("{")
-for k in field_names:
+for k in sorted_field_names:
     t = field_names[k]
     space = ' '
     if t.endswith('*'):
