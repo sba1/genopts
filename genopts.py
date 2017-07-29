@@ -268,11 +268,22 @@ class GenerateMXValidatorVisitor(Visitor):
 ################################################################################
 
 class GenerateCommandValidatorVisitor(Visitor):
-    def __init__(self):
-        pass
+    def __init__(self, gf, option_cmd_parents):
+        self.gf = gf
+        self.option_cmd_parents = option_cmd_parents
 
     def visit_command(self, n):
-        pass
+        self.cur_command_name = n.command
+
+    def visit_option_with_arg(self, n):
+        name = makename(n)
+        cur_command_name = name + "_pos"
+        assert len(self.option_cmd_parents[n]) == 1
+        gf.writeline("if (cli->{0} != {1})".format(cur_command_name, self.option_cmd_parents[n][0]))
+        gf.writeline("{")
+        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \"{1}\" command)".format(n.command,self.cur_command_name))
+        gf.writeline("return 0;")
+        gf.writeline("}")
 
 ################################################################################
 
@@ -303,7 +314,7 @@ class GenerateParserVisitor(Visitor):
     """
     Vistor that generates the parsing of the command line arguments
     """
-    def __init__(self, gf, field_names):
+    def __init__(self, gf, field_names, option_cmd_parents):
         """
         Constructs the visitor.
 
@@ -318,6 +329,7 @@ class GenerateParserVisitor(Visitor):
         self.gf = gf
         self.first = True
         self.field_names = field_names
+        self.option_cmd_parents = option_cmd_parents
         self.cur_command = 0
 
     def write_strcmp_prologue(self, str):
@@ -344,6 +356,10 @@ class GenerateParserVisitor(Visitor):
         self.gf.writeline("cli->{0} = 1;".format(field_name))
         self.gf.writeline("cli->{0} = i;".format(pos_name))
         self.gf.writeline("cur_command = {0};".format(self.cur_command))
+
+        # Remember our parent, for now only one parent
+        self.option_cmd_parents[n] = [self.cur_command]
+
         # This was a proper command, level up command index
         self.cur_command = self.cur_command + 1
 
@@ -364,6 +380,9 @@ class GenerateParserVisitor(Visitor):
             self.gf.writeline("cli->{0} = argv[i];".format(field_name))
         self.remember_pos(field_name)
 
+        # Remember our parent, for now only one parent
+        self.option_cmd_parents[n] = [self.cur_command]
+
         self.write_strcmp_epilogue()
 
 gf = GenFile()
@@ -375,7 +394,8 @@ gf.writeline("#include <string.h>")
 # visitor with a /dev/zero sink. This will fill the
 # field_names dictionary
 field_names = dict()
-navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names))
+option_cmd_parents = dict()
+navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names, option_cmd_parents))
 sorted_field_names = sorted([k for k in field_names])
 
 gf.writeline()
@@ -400,7 +420,8 @@ gf.writeline("for (i=0;i < argc; i++)")
 gf.writeline("{")
 
 field_names = dict()
-navigate(parsed, GenerateParserVisitor(gf, field_names))
+option_cmd_parents = dict()
+navigate(parsed, GenerateParserVisitor(gf, field_names, option_cmd_parents))
 
 gf.writeline("}")
 gf.writeline("}")
@@ -409,7 +430,7 @@ gf.writeline()
 # Generates the validation function
 gf.writeline("int validate(struct cli *cli)")
 gf.writeline("{")
-navigate(parsed, GenerateCommandValidatorVisitor())
+navigate(parsed, GenerateCommandValidatorVisitor(gf, option_cmd_parents))
 navigate(parsed, GenerateMXValidatorVisitor())
 gf.writeline("return 1;")
 gf.writeline("}")
