@@ -228,6 +228,8 @@ def navigate(n, visitor):
         visitor.visit_command(n)
         for e in n.options:
             navigate(e, visitor)
+        if n.subcommand is not None:
+            navigate(n.subcommand, visitor)
     elif isinstance(n, OptionWithArg):
         visitor.visit_option_with_arg(n)
 
