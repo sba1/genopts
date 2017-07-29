@@ -354,12 +354,15 @@ class GenerateParserVisitor(Visitor):
         self.write_strcmp_prologue(n.command)
 
         field_name = makename(n)
-        self.field_names[field_name] = "char *"
+        if n.arg == None:
+            self.field_names[field_name] = "int"
+            self.gf.writeline("cli->{0} = 1;".format(field_name))
+        else:
+            self.field_names[field_name] = "char *"
+            field_name = makename(n)
 
-        field_name = makename(n)
-
-        self.gf.writeline("if (++i == argc) break;")
-        self.gf.writeline("cli->{0} = argv[i];".format(field_name))
+            self.gf.writeline("if (++i == argc) break;")
+            self.gf.writeline("cli->{0} = argv[i];".format(field_name))
         self.remember_pos(field_name)
 
         self.write_strcmp_epilogue()
