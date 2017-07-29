@@ -336,17 +336,16 @@ class GenerateParserVisitor(Visitor):
         self.write_strcmp_prologue(cmd)
 
         field_name = makename(n)
+        pos_name = field_name + "_pos"
+
         self.field_names[field_name] = "int"
+        self.field_names[pos_name] = "int"
+
         self.gf.writeline("cli->{0} = 1;".format(field_name))
-        if not is_flag(cmd):
-            pos_name = field_name + "_pos"
-            self.field_names[pos_name] = "int"
-            self.gf.writeline("cli->{0} = i;".format(pos_name))
-            self.gf.writeline("cur_command = {0};".format(self.cur_command))
-            # This was a proper command, level up command index
-            self.cur_command = self.cur_command + 1
-        else:
-            self.remember_pos(field_name)
+        self.gf.writeline("cli->{0} = i;".format(pos_name))
+        self.gf.writeline("cur_command = {0};".format(self.cur_command))
+        # This was a proper command, level up command index
+        self.cur_command = self.cur_command + 1
 
         self.write_strcmp_epilogue()
 
