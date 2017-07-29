@@ -1,3 +1,3 @@
-test.c
-test.o
+test_cli.c
+test_cli.o
 
