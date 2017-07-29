@@ -324,7 +324,11 @@ class GenerateParserVisitor(Visitor):
             Where the generated code is written to
         field_names:
             A dictionary in which all required field names of the struct
-            are stored including their type.
+            are stored including their type. This will be modified by the
+            visitor.
+        parents:
+            A dictionary of the possible parents of a command. This will be
+            modified by the visitor.
         """
         self.gf = gf
         self.first = True
