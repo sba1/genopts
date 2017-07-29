@@ -240,8 +240,9 @@ class GenerateMXValidatorVisitor(Visitor):
     """
     Visitor to generate code for validation of multual exclusions.
     """
-    def __init__(self):
+    def __init__(self, gf):
         self.cmds = []
+        self.gf = gf
 
     def enter_optional(self, n):
         self.cmds = []
@@ -250,17 +251,17 @@ class GenerateMXValidatorVisitor(Visitor):
         if len(self.cmds) < 2:
             return
 
-        print("\t{")
-        print("\t\tint count = 0;")
+        gf.writeline("{")
+        gf.writeline("int count = 0;")
         for cmd in self.cmds:
-            print("\t\tcount += !!cli->{0};".format(makename(cmd)))
+            gf.writeline("count += !!cli->{0};".format(makename(cmd)))
         opts = [cmd.command for cmd in self.cmds]
-        print("\t\tif (count > 1)")
-        print("\t\t{")
-        print("\t\t\tfprintf(stderr, \"Only one of {0} may be given\\n\");".format(", ".join(opts)))
-        print("\t\t\treturn 0;")
-        print("\t\t}")
-        print("\t}")
+        gf.writeline("if (count > 1)")
+        gf.writeline("{")
+        gf.writeline("fprintf(stderr, \"Only one of {0} may be given\\n\");".format(", ".join(opts)))
+        gf.writeline("return 0;")
+        gf.writeline("}")
+        gf.writeline("}")
 
     def visit_option_with_arg(self, n):
         self.cmds.append(n)
@@ -435,6 +436,6 @@ gf.writeline()
 gf.writeline("int validate(struct cli *cli)")
 gf.writeline("{")
 navigate(parsed, GenerateCommandValidatorVisitor(gf, option_cmd_parents))
-navigate(parsed, GenerateMXValidatorVisitor())
+navigate(parsed, GenerateMXValidatorVisitor(gf))
 gf.writeline("return 1;")
 gf.writeline("}")
