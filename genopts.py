@@ -15,9 +15,6 @@ from __future__ import print_function
 import collections
 import sys
 
-pattern = "commit [-a | --interactive | --patch]  [-F <file> | -m <msg>] [--reset-author]"
-pattern2 = "submodule [--quiet] update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--force] [--rebase|--merge]"
-
 ################################################################################
 
 class Command:
@@ -288,7 +285,12 @@ class GenerateCommandValidatorVisitor(Visitor):
 
 ################################################################################
 
-parsed = parse_pattern(pattern)
+
+lines = sys.stdin.readlines()
+if len(lines) < 1:
+    sys.exit("Input must contain at least one line")
+
+parsed = parse_pattern(lines[0].strip())
 #print(parsed)
 
 def is_flag(str):

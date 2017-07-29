@@ -3,5 +3,5 @@ all: test
 
 .PHONY: test
 test:
-	./genopts.py >test.c
+	cat commit.genopts | ./genopts.py >test.c
 	gcc -c test.c
