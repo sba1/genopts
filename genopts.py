@@ -277,11 +277,11 @@ class GenerateCommandValidatorVisitor(Visitor):
 
     def visit_option_with_arg(self, n):
         name = makename(n)
-        cur_command_name = name + "_pos"
+        cur_command_name = name + "_cmd"
         assert len(self.option_cmd_parents[n]) == 1
         gf.writeline("if (cli->{0} != {1})".format(cur_command_name, self.option_cmd_parents[n][0]))
         gf.writeline("{")
-        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \"{1}\" command)".format(n.command,self.cur_command_name))
+        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command)\");".format(n.command,self.cur_command_name))
         gf.writeline("return 0;")
         gf.writeline("}")
 
