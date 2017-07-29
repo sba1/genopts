@@ -285,14 +285,6 @@ class GenerateCommandValidatorVisitor(Visitor):
 
 ################################################################################
 
-
-lines = sys.stdin.readlines()
-if len(lines) < 1:
-    sys.exit("Input must contain at least one line")
-
-parsed = parse_pattern(lines[0].strip())
-#print(parsed)
-
 def is_flag(str):
     return str[0] == '-'
 
@@ -391,6 +383,13 @@ class GenerateParserVisitor(Visitor):
         self.option_cmd_parents[n] = [self.cur_command]
 
         self.write_strcmp_epilogue()
+
+lines = sys.stdin.readlines()
+if len(lines) < 1:
+    sys.exit("Input must contain at least one line")
+
+parsed = parse_pattern(lines[0].strip())
+#print(parsed)
 
 gf = GenFile()
 
