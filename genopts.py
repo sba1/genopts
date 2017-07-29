@@ -7,8 +7,8 @@
 
 # TODO: Add possibility to express that e.g., -m can appear multiple times (e.g., use asteriks)
 # TODO: Accept generic string <> (not only in args)
-# TODO: Command / Options / Subcommand / Options
-# TODO: Add parent command to check which options belong to which command
+# TODO: Completion support
+# TODO: Types
 
 from __future__ import print_function
 
