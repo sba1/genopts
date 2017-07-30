@@ -6,4 +6,4 @@ all: test
 .PHONY: test
 test:
 	cat $(GENOPTS) | ./genopts.py >test_cli.c
-	gcc test.c -o test
+	gcc -ggdb test.c -o test
