@@ -1,7 +1,11 @@
 GENOPTS=$(wildcard *genopts)
 
 .PHONY: all
-all: test
+all: check test
+
+.PHONY: check
+check:
+	./genopts_tests.py
 
 .PHONY: test
 test:
