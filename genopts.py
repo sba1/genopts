@@ -249,17 +249,17 @@ class GenerateMXValidatorVisitor(Visitor):
         if len(self.cmds) < 2:
             return
 
-        gf.writeline("{")
-        gf.writeline("int count = 0;")
+        self.gf.writeline("{")
+        self.gf.writeline("int count = 0;")
         for cmd in self.cmds:
-            gf.writeline("count += !!cli->{0};".format(makename(cmd)))
+            self.gf.writeline("count += !!cli->{0};".format(makename(cmd)))
         opts = [cmd.command for cmd in self.cmds]
-        gf.writeline("if (count > 1)")
-        gf.writeline("{")
-        gf.writeline("fprintf(stderr, \"Only one of {0} may be given\\n\");".format(", ".join(opts)))
-        gf.writeline("return 0;")
-        gf.writeline("}")
-        gf.writeline("}")
+        self.gf.writeline("if (count > 1)")
+        self.gf.writeline("{")
+        self.gf.writeline("fprintf(stderr, \"Only one of {0} may be given\\n\");".format(", ".join(opts)))
+        self.gf.writeline("return 0;")
+        self.gf.writeline("}")
+        self.gf.writeline("}")
 
     def visit_option_with_arg(self, n):
         self.cmds.append(n)
@@ -278,11 +278,11 @@ class GenerateCommandValidatorVisitor(Visitor):
         name = makename(n)
         cur_command_name = name + "_cmd"
         assert len(self.option_cmd_parents[n]) == 1
-        gf.writeline("if (cli->{0} != 0 && cli->{0} != {1})".format(cur_command_name, self.option_cmd_parents[n][0]))
-        gf.writeline("{")
-        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command,self.cur_command_name))
-        gf.writeline("return 0;")
-        gf.writeline("}")
+        self.gf.writeline("if (cli->{0} != 0 && cli->{0} != {1})".format(cur_command_name, self.option_cmd_parents[n][0]))
+        self.gf.writeline("{")
+        self.gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command,self.cur_command_name))
+        self.gf.writeline("return 0;")
+        self.gf.writeline("}")
 
 ################################################################################
 
