@@ -392,65 +392,71 @@ class GenerateParserVisitor(Visitor):
 
         self.write_strcmp_epilogue()
 
-lines = sys.stdin.readlines()
-if len(lines) < 1:
-    sys.exit("Input must contain at least one line")
+def genopts(patterns):
+    parsed = parse_pattern(patterns[0].strip())
+    #print(parsed)
 
-parsed = parse_pattern(lines[0].strip())
-#print(parsed)
+    gf = GenFile()
 
-gf = GenFile()
+    gf.writeline("#include <stdio.h>")
+    gf.writeline("#include <string.h>")
 
-gf.writeline("#include <stdio.h>")
-gf.writeline("#include <string.h>")
+    # Generate the struct cli by calling the generate
+    # visitor with a /dev/zero sink. This will fill the
+    # field_names dictionary
+    field_names = dict()
+    option_cmd_parents = dict()
+    navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names, option_cmd_parents))
+    sorted_field_names = sorted([k for k in field_names])
 
-# Generate the struct cli by calling the generate
-# visitor with a /dev/zero sink. This will fill the
-# field_names dictionary
-field_names = dict()
-option_cmd_parents = dict()
-navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names, option_cmd_parents))
-sorted_field_names = sorted([k for k in field_names])
+    gf.writeline()
+    gf.writeline("struct cli")
+    gf.writeline("{")
+    for k in sorted_field_names:
+        t = field_names[k]
+        space = ' '
+        if t.endswith('*'):
+            space = ''
+        gf.writeline("{0}{1}{2};".format(t, space, k))
+    gf.writeline("};")
 
-gf.writeline()
-gf.writeline("struct cli")
-gf.writeline("{")
-for k in sorted_field_names:
-    t = field_names[k]
-    space = ' '
-    if t.endswith('*'):
-        space = ''
-    gf.writeline("{0}{1}{2};".format(t, space, k))
-gf.writeline("};")
+    # Generate a function that parses the command line and populates
+    # the struct cli. It does not yet make verification
+    gf.writeline()
+    gf.writeline("static int parse_cli(int argc, char *argv[], struct cli *cli)")
+    gf.writeline("{")
+    gf.writeline("int i;")
+    gf.writeline("int cur_command = -1;")
+    gf.writeline("for (i=0; i < argc; i++)")
+    gf.writeline("{")
 
-# Generate a function that parses the command line and populates
-# the struct cli. It does not yet make verification
-gf.writeline()
-gf.writeline("static int parse_cli(int argc, char *argv[], struct cli *cli)")
-gf.writeline("{")
-gf.writeline("int i;")
-gf.writeline("int cur_command = -1;")
-gf.writeline("for (i=0; i < argc; i++)")
-gf.writeline("{")
+    field_names = dict()
+    option_cmd_parents = dict()
+    navigate(parsed, GenerateParserVisitor(gf, field_names, option_cmd_parents))
 
-field_names = dict()
-option_cmd_parents = dict()
-navigate(parsed, GenerateParserVisitor(gf, field_names, option_cmd_parents))
+    gf.writeline("else")
+    gf.writeline("{")
+    gf.writeline('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
+    gf.writeline("return 0;")
+    gf.writeline("}")
+    gf.writeline("}")
+    gf.writeline("return 1;")
+    gf.writeline("}")
+    gf.writeline()
 
-gf.writeline("else")
-gf.writeline("{")
-gf.writeline('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
-gf.writeline("return 0;")
-gf.writeline("}")
-gf.writeline("}")
-gf.writeline("return 1;")
-gf.writeline("}")
-gf.writeline()
+    # Generates the validation function
+    gf.writeline("static int validate_cli(struct cli *cli)")
+    gf.writeline("{")
+    navigate(parsed, GenerateCommandValidatorVisitor(gf, option_cmd_parents))
+    navigate(parsed, GenerateMXValidatorVisitor(gf))
+    gf.writeline("return 1;")
+    gf.writeline("}")
 
-# Generates the validation function
-gf.writeline("static int validate_cli(struct cli *cli)")
-gf.writeline("{")
-navigate(parsed, GenerateCommandValidatorVisitor(gf, option_cmd_parents))
-navigate(parsed, GenerateMXValidatorVisitor(gf))
-gf.writeline("return 1;")
-gf.writeline("}")
+def main():
+    lines = sys.stdin.readlines()
+    if len(lines) < 1:
+        sys.exit("Input must contain at least one line")
+    genopts(lines)
+
+if __name__ == "__main__":
+    main()
