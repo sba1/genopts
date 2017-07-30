@@ -1,7 +1,9 @@
+GENOPTS=$(wildcard *genopts)
+
 .PHONY: all
 all: test
 
 .PHONY: test
 test:
-	cat commit.genopts | ./genopts.py >test_cli.c
+	cat $(GENOPTS) | ./genopts.py >test_cli.c
 	gcc test.c -o test
