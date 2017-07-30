@@ -329,12 +329,17 @@ class GenerateParserVisitor(Visitor):
         self.first = True
         self.field_names = field_names
         self.option_cmd_parents = option_cmd_parents
+        self.first = True
         # Start with 1 in case there options without commands and 0 means not
         # initialized
         self.cur_command = 1
 
     def write_strcmp_prologue(self, str):
-        self.gf.writeline('if (!strcmp("{0}", argv[i]))'.format(str))
+        if self.first:
+            self.gf.writeline('if (!strcmp("{0}", argv[i]))'.format(str))
+            self.first = False
+        else:
+            self.gf.writeline('else if (!strcmp("{0}", argv[i]))'.format(str))
         self.gf.writeline('{')
     def write_strcmp_epilogue(self):
         self.gf.writeline('}')
