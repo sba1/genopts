@@ -277,7 +277,7 @@ class GenerateCommandValidatorVisitor(Visitor):
         name = makename(n)
         cur_command_name = name + "_cmd"
         assert len(self.option_cmd_parents[n]) == 1
-        gf.writeline("if (cli->{0} != {1})".format(cur_command_name, self.option_cmd_parents[n][0]))
+        gf.writeline("if (cli->{0} != 0 && cli->{0} != {1})".format(cur_command_name, self.option_cmd_parents[n][0]))
         gf.writeline("{")
         gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command,self.cur_command_name))
         gf.writeline("return 0;")
@@ -329,7 +329,9 @@ class GenerateParserVisitor(Visitor):
         self.first = True
         self.field_names = field_names
         self.option_cmd_parents = option_cmd_parents
-        self.cur_command = 0
+        # Start with 1 in case there options without commands and 0 means not
+        # initialized
+        self.cur_command = 1
 
     def write_strcmp_prologue(self, str):
         self.gf.writeline('if (!strcmp("{0}", argv[i]))'.format(str))
@@ -352,15 +354,15 @@ class GenerateParserVisitor(Visitor):
         self.field_names[field_name] = "int"
         self.field_names[pos_name] = "int"
 
+        # This was a proper command, level up command index
+        self.cur_command = self.cur_command + 1
+
         self.gf.writeline("cli->{0} = 1;".format(field_name))
         self.gf.writeline("cli->{0} = i;".format(pos_name))
         self.gf.writeline("cur_command = {0};".format(self.cur_command))
 
         # Remember our parent, for now only one parent
         self.option_cmd_parents[n] = [self.cur_command]
-
-        # This was a proper command, level up command index
-        self.cur_command = self.cur_command + 1
 
         self.write_strcmp_epilogue()
 
