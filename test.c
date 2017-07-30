@@ -3,7 +3,7 @@
 int main(int argc, char **argv)
 {
 	struct cli cli = {0};
-	parse(argc, argv, &cli);
+	parse(argc-1, argv+1, &cli);
 	if (!validate(&cli))
 	{
 		return -1;
