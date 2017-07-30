@@ -425,7 +425,7 @@ gf.writeline("};")
 # Generate a function that parses the command line and populates
 # the struct cli. It does not yet make verification
 gf.writeline()
-gf.writeline("int parse(int argc, char *argv[], struct cli *cli)")
+gf.writeline("static int parse_cli(int argc, char *argv[], struct cli *cli)")
 gf.writeline("{")
 gf.writeline("int i;")
 gf.writeline("int cur_command = -1;")
@@ -447,7 +447,7 @@ gf.writeline("}")
 gf.writeline()
 
 # Generates the validation function
-gf.writeline("int validate(struct cli *cli)")
+gf.writeline("static int validate_cli(struct cli *cli)")
 gf.writeline("{")
 navigate(parsed, GenerateCommandValidatorVisitor(gf, option_cmd_parents))
 navigate(parsed, GenerateMXValidatorVisitor(gf))
