@@ -429,7 +429,7 @@ gf.writeline("void parse(int argc, char *argv[], struct cli *cli)")
 gf.writeline("{")
 gf.writeline("int i;")
 gf.writeline("int cur_command = -1;")
-gf.writeline("for (i=0;i < argc; i++)")
+gf.writeline("for (i=0; i < argc; i++)")
 gf.writeline("{")
 
 field_names = dict()
