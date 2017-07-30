@@ -53,6 +53,7 @@ class Optional:
         return "Optional(" + repr(self.list) + ")"
 
 class Pattern:
+    """Contains commands"""
     def __init__(self, list):
         self.list = list
     def __repr__(self):
