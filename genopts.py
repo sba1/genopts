@@ -147,7 +147,7 @@ def parse_optional(optional):
         elm = None
         new_rem, elm = parse_command_with_arg(rem)
 
-        if new_rem == None:
+        if new_rem is None:
             new_rem, command = parse_command_token(rem)
             elm = OptionWithArg(command, None)
         if new_rem is None: return None, None
