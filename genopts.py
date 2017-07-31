@@ -150,14 +150,14 @@ def parse_optional(optional):
         if new_rem == None:
             new_rem, command = parse_command_token(rem)
             elm = OptionWithArg(command, None)
-        if new_rem is None: return None
+        if new_rem is None: return None, None
         rem = new_rem
         l.append(elm)
 
         rem = skip_spaces(rem)
         if rem[0] == '|':
             rem = skip_spaces(rem[1:])
-    if rem[0] != ']': return None
+    if rem[0] != ']': return None, None
     return rem[1:], Optional(l)
 
 def parse_pattern(pattern):
