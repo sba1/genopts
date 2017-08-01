@@ -24,7 +24,6 @@ $(TEST_GENOPTS): test_%_cli: test_%_cli.c
 
 # Generate a main executable that should be paramterized via all included
 # genopts
-.PHONY: test
 test: $(TEST_GENOPTS)
 	cat $(GENOPTS) | ./genopts.py >test_cli.c
 	gcc -ggdb -include test_cli.c test.c -o test
@@ -34,3 +33,4 @@ clean:
 	rm -f $(TEST_GENOPTS_SRCS)
 	rm -f $(TEST_GENOPTS)
 	rm -f test_cli.c
+	rm -f test
