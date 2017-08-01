@@ -9,6 +9,8 @@
 # TODO: Accept generic string <> (not only in args)
 # TODO: Completion support
 # TODO: Types
+# TODO: There is no real difference beteen [] that contains options and those that can
+#   be found in shorted options, this is not really reflected in this approach
 
 from __future__ import print_function
 
