@@ -28,6 +28,7 @@ class Command:
     and an optional subcommand.
     """
     def __init__(self, command, options, subcommand):
+        # type: (str, List[Optional], Command)->None
         self.command = command
         self.options = options # List
         self.subcommand = subcommand
@@ -41,6 +42,7 @@ class Command:
 class OptionWithArg:
     """Contains an option with args"""
     def __init__(self, command, arg):
+        # type: (str, str)->None
         self.command = command
         self.arg = arg
     def __repr__(self):
@@ -53,6 +55,7 @@ class OptionWithArg:
 class Optional:
     """Contains a set of mutual exlusive options"""
     def __init__(self, list):
+        # type: (List[Optional])->None
         self.list = list
     def __repr__(self):
         return "Optional(" + repr(self.list) + ")"
@@ -60,6 +63,7 @@ class Optional:
 class Pattern:
     """Contains commands"""
     def __init__(self, list):
+        # type: (List[Command])->None
         self.list = list
     def __repr__(self):
         return "Pattern(" + repr(self.list) + ")"
@@ -74,6 +78,7 @@ def skip_spaces(text):
     return text[i:]
 
 def parse_command_token(command):
+    # type: (str) -> Tuple[str, str]
     """Parse a command token and return it and and the remainder"""
     for i, c in enumerate(command):
         if c == ' ':
@@ -90,12 +95,13 @@ def parse_command_token(command):
     return command[i:], command[:i]
 
 def parse_command(command):
+    # type: (str) -> Tuple[str, Command]
     rem, command_tk = parse_command_token(command)
     if rem is None:
         return None, None
 
-    options = []
-    subcommand = []
+    options = [] # type: List[Optional]
+    subcommand = None # type: Command
 
     while rem is not None and len(rem) != 0:
         rem = skip_spaces(rem)
