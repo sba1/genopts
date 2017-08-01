@@ -12,6 +12,12 @@ from genopts import *
 import unittest
 
 class TestParser(unittest.TestCase):
+    def test_combine(self):
+        self.assertEquals(['aba', 'abca'], combine(['ab','abc'],['a']))
+        self.assertEquals(['aba', 'abca'], combine(['a'],['ba', 'bca']))
+        self.assertEquals(['aba', 'abca'], combine(['aba', 'abca'], ['']))
+        self.assertEquals([], combine(['aba', 'abca'], []))
+
     def test_parse_optional_simple(self):
         rem, parse_tree = parse_optional("[--option]")
         self.assertEquals('', rem)

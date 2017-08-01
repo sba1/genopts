@@ -141,6 +141,14 @@ def parse_command_with_arg(command_with_arg):
         return None, None
     return rem, OptionWithArg(command, arg)
 
+def combine(first,second):
+    # type: (List[str],List[str])->List[str]
+    r = [] # type: List[str]
+    for a in first:
+        for b in second:
+            r.append(a+b)
+    return r
+
 def parse_optional(optional):
     if optional[0] != '[': return None, None
     rem = optional[1:]
