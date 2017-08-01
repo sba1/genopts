@@ -1,3 +1,4 @@
-test_cli.c
+test_*cli.c
+test_*cli
 test
 *.pyc
