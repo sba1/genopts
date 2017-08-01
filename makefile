@@ -28,3 +28,9 @@ $(TEST_GENOPTS): test_%_cli: test_%_cli.c
 test: $(TEST_GENOPTS)
 	cat $(GENOPTS) | ./genopts.py >test_cli.c
 	gcc -ggdb -include test_cli.c test.c -o test
+
+.PHONY: clean
+clean:
+	rm -f $(TEST_GENOPTS_SRCS)
+	rm -f $(TEST_GENOPTS)
+	rm -f test_cli.c
