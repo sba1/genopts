@@ -152,6 +152,65 @@ def combine(first,second):
             r.append(a+b)
     return r
 
+def expand(token):
+    # type: (List[Tuple[int,str]])->List[str]
+    """Expand the given tokens and return a list of strings with possible matches"""
+    if len(token) == 0:
+        return ['']
+
+    l = []
+
+    if token[0][0] == 0:
+        l.append(token[0][1])
+    else:
+        l.append(token[0][1])
+        l.append('')
+
+    expanded = expand(token[1:])
+    return combine(l, expanded)
+
+
+def parse_shorted_options(option):
+    """
+    Parses a shorted option token that really is a mutual exlusive set of
+    options, e.g., --[no]-option. This call will already expand the argument,
+    i.e., it will return two options: --option and --no-option.
+
+    Parameters
+    ----------
+    option : the string to parse
+
+    Returns
+    -------
+    rem, list
+        a tuple of the remainder (not consumed part) of the string and a list
+        of parsed options (OptionWithArg).
+        None, None on a failure
+    """
+    level = 0 # Type: int
+    variants = 1 # Type: int
+    last_pos = 0 # Type: int
+    token = [] # Type: List[Tuple[int,str]]
+    for i in range(0,len(option)):
+        if option[i] == '[':
+            token.append((0, option[last_pos:i]))
+            level = level + 1
+            variants = variants + 1
+            last_pos = i + 1
+        if option[i] == '|':
+            return None,None
+        if option[i] == ']':
+            token.append((level, option[last_pos:i]))
+            if level == 0:
+                break
+            level = level - 1
+            last_pos = i + 1
+
+    options = expand(token)
+    if options is None:
+        return None, None
+    return option[i:], options
+
 def parse_optional(optional):
     if optional[0] != '[': return None, None
     rem = optional[1:]
@@ -160,6 +219,12 @@ def parse_optional(optional):
         elm = None
         new_rem, elm = parse_command_with_arg(rem)
 
+        if new_rem is None:
+            new_rem, options = parse_shorted_options(rem)
+            if new_rem is not None:
+                for o in options[1:]:
+                    l.append(OptionWithArg(o, None))
+                elm = OptionWithArg(options[0], None)
         if new_rem is None:
             new_rem, command = parse_command_token(rem)
             elm = OptionWithArg(command, None)

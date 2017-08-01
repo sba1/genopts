@@ -36,5 +36,15 @@ class TestParser(unittest.TestCase):
         self.assertEquals("--option", parse_tree.list[0].command)
         self.assertEquals("--no-option", parse_tree.list[1].command)
 
+    def test_parse_optional_short(self):
+        rem, parse_tree = parse_optional("[--[no-]option]")
+        self.assertEquals('', rem)
+        self.assertTrue(isinstance(parse_tree, Optional))
+        self.assertEquals(2, len(parse_tree.list))
+        self.assertTrue(isinstance(parse_tree.list[0], OptionWithArg))
+        self.assertTrue(isinstance(parse_tree.list[1], OptionWithArg))
+        self.assertEquals("--option", parse_tree.list[0].command)
+        self.assertEquals("--no-option", parse_tree.list[1].command)
+
 if __name__ == "__main__":
     unittest.main()
