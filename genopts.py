@@ -17,6 +17,9 @@ from __future__ import print_function
 import collections
 import sys
 
+if False: # For MyPy, see https://stackoverflow.com/questions/446052/how-can-i-check-for-python-version-in-a-program-that-uses-new-language-features
+    from typing import Tuple
+
 ################################################################################
 
 class Command:
