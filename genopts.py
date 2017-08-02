@@ -447,6 +447,7 @@ class GenerateParserVisitor(Visitor):
         else:
             self.gf.writeline('else if (!strcmp("{0}", argv[i]))'.format(str))
         self.gf.writeline('{')
+
     def write_strcmp_epilogue(self):
         # type: () -> None
         self.gf.writeline('}')
