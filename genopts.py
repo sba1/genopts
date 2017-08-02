@@ -426,7 +426,7 @@ class GenerateParserVisitor(Visitor):
             A dictionary in which all required field names of the struct
             are stored including their type. This will be modified by the
             visitor.
-        parents:
+        option_cmd_parents:
             A dictionary of the possible parents of a command. This will be
             modified by the visitor.
         """
