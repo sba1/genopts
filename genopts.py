@@ -18,7 +18,7 @@ import collections
 import sys
 
 if False: # For MyPy, see https://stackoverflow.com/questions/446052/how-can-i-check-for-python-version-in-a-program-that-uses-new-language-features
-    from typing import List,Tuple
+    from typing import List,IO,Union,Tuple
 
 ################################################################################
 
@@ -139,6 +139,7 @@ def parse_arg(arg):
     return rem[i+1:], rem[:i]
 
 def parse_command_with_arg(command_with_arg):
+    # type: (str)->Tuple[str, OptionWithArg]
     rem, command = parse_command_token(command_with_arg)
     if rem == None:
         return None, None
@@ -164,7 +165,7 @@ def expand(token):
     if len(token) == 0:
         return ['']
 
-    l = []
+    l = [] # type: List[str]
 
     if token[0][0] == 0:
         l.append(token[0][1])
@@ -177,6 +178,7 @@ def expand(token):
 
 
 def parse_shorted_options(option):
+    # type: (str)->Tuple[str, List[str]]
     """
     Parses a shorted option token that really is a mutual exlusive set of
     options, e.g., --[no]-option. This call will already expand the argument,
@@ -218,9 +220,10 @@ def parse_shorted_options(option):
     return option[i:], options
 
 def parse_optional(optional):
+    # type: (str)->Tuple[str,Optional]
     if optional[0] != '[': return None, None
     rem = optional[1:]
-    l = []
+    l = [] # type: List[OptionWithArg]
     while len(rem) > 0 and rem[0] != ']':
         elm = None
         new_rem, elm = parse_command_with_arg(rem)
@@ -263,11 +266,13 @@ def parse_pattern(pattern):
 ################################################################################
 class GenFile:
     def __init__(self, f=sys.stdout):
+        # type: (IO[str])->None
         self.f = f
         # Stores the indendation level
-        self.level = 0
+        self.level = 0 # type: int
 
     def writeline(self, str=""):
+        # type: (str)->None
         if str.startswith('}'):
             self.level = self.level - 1;
         print('\t' * self.level + str,file=self.f)
@@ -279,38 +284,45 @@ class GenFile:
 # Poor man's visitor
 class Visitor:
     def enter_pattern(self, n):
+        # type: (Pattern)->None
         pass
     def leave_pattern(self, n):
+        # type: (Pattern)->None
         pass
     def enter_optional(self, n):
+        # type: (Optional)->None
         pass
     def leave_optional(self, n):
+        # type: (Optional)->None
         pass
     def visit_command(self, n):
+        # type: (Command)->None
         pass
     def visit_option_with_arg(self, n):
+        # type: (OptionWithArg)->None
         pass
 
 # Similar to accept() but does implement the naviation
 # in a monolitic fashion
 def navigate(n, visitor):
+    # type: (Union[Pattern,Command,Optional,OptionWithArg], Visitor)->None
     """
     Navigate through the hierarchy starting at n and call the visitor
     """
     if isinstance(n, Pattern):
         visitor.enter_pattern(n)
-        for e in n.list:
-            navigate(e, visitor)
+        for c in n.list:
+            navigate(c, visitor)
         visitor.leave_pattern(n)
     elif isinstance(n, Optional):
         visitor.enter_optional(n)
-        for e in n.list:
-            navigate(e, visitor)
+        for a in n.list:
+            navigate(a, visitor)
         visitor.leave_optional(n)
     elif isinstance(n, Command):
         visitor.visit_command(n)
-        for e in n.options:
-            navigate(e, visitor)
+        for o in n.options:
+            navigate(o, visitor)
         if n.subcommand is not None:
             navigate(n.subcommand, visitor)
     elif isinstance(n, OptionWithArg):
@@ -323,7 +335,8 @@ class GenerateMXValidatorVisitor(Visitor):
     Visitor to generate code for validation of multual exclusions.
     """
     def __init__(self, gf):
-        self.cmds = []
+        # type: (GenFile)->None
+        self.cmds = [] # type: List[Optional]
         self.gf = gf
 
     def enter_optional(self, n):
@@ -352,6 +365,7 @@ class GenerateMXValidatorVisitor(Visitor):
 
 class GenerateCommandValidatorVisitor(Visitor):
     def __init__(self, gf, option_cmd_parents):
+        # type: (GenFile,List[List[int]])->None
         self.gf = gf
         self.option_cmd_parents = option_cmd_parents
 
