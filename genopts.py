@@ -30,7 +30,7 @@ class Command:
     def __init__(self, command, options, subcommand):
         # type: (str, List[Optional], Command)->None
         self.command = command
-        self.options = options # List
+        self.options = options
         self.subcommand = subcommand
     def __repr__(self):
         if self.subcommand != None:
