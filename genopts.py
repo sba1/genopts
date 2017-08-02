@@ -55,7 +55,7 @@ class OptionWithArg:
 class Optional:
     """Contains a set of mutual exlusive options"""
     def __init__(self, list):
-        # type: (List[Optional])->None
+        # type: (List[OptionWithArg])->None
         self.list = list
     def __repr__(self):
         return "Optional(" + repr(self.list) + ")"
