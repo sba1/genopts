@@ -365,14 +365,16 @@ class GenerateMXValidatorVisitor(Visitor):
 
 class GenerateCommandValidatorVisitor(Visitor):
     def __init__(self, gf, option_cmd_parents):
-        # type: (GenFile,List[List[int]])->None
+        # type: (GenFile,Dict[Union[Pattern,Command,Optional,OptionWithArg],List[int]])->None
         self.gf = gf
         self.option_cmd_parents = option_cmd_parents
 
     def visit_command(self, n):
+        # type: (Command)->None
         self.cur_command_name = n.command
 
     def visit_option_with_arg(self, n):
+        # type: (OptionWithArg)->None
         name = makename(n)
         cur_command_name = name + "_cmd"
         assert len(self.option_cmd_parents[n]) == 1
@@ -385,13 +387,16 @@ class GenerateCommandValidatorVisitor(Visitor):
 ################################################################################
 
 def is_flag(str):
+    # type: (str)->bool
     return str[0] == '-'
 
 def makecname(str):
+    # type: (str)->str
     str = str.replace("-", "_")
     return str.lstrip("_")
 
 def makename(o):
+    # type: (Union[Command,OptionWithArg])->str
     """
     Make a field name for a given object.
     """
@@ -409,6 +414,7 @@ class GenerateParserVisitor(Visitor):
     Vistor that generates the parsing of the command line arguments
     """
     def __init__(self, gf, field_names, option_cmd_parents):
+        # type: (GenFile, Dict[str,str], Dict[Union[Pattern,Command,Optional,OptionWithArg],List[int]]) -> None
         """
         Constructs the visitor.
 
@@ -434,6 +440,7 @@ class GenerateParserVisitor(Visitor):
         self.cur_command = 1
 
     def write_strcmp_prologue(self, str):
+        # type: (str) -> None
         if self.first:
             self.gf.writeline('if (!strcmp("{0}", argv[i]))'.format(str))
             self.first = False
@@ -441,14 +448,17 @@ class GenerateParserVisitor(Visitor):
             self.gf.writeline('else if (!strcmp("{0}", argv[i]))'.format(str))
         self.gf.writeline('{')
     def write_strcmp_epilogue(self):
+        # type: () -> None
         self.gf.writeline('}')
 
     def remember_pos(self, field_name):
+        # type: (str) -> None
         cur_command_name = field_name + "_cmd"
         self.field_names[cur_command_name] = "int"
         self.gf.writeline("cli->{0} = cur_command;".format(cur_command_name))
 
     def visit_command(self, n):
+        # type: (Command) -> None
         cmd = n.command
         self.write_strcmp_prologue(cmd)
 
@@ -471,6 +481,7 @@ class GenerateParserVisitor(Visitor):
         self.write_strcmp_epilogue()
 
     def visit_option_with_arg(self, n):
+        # type: (OptionWithArg) -> None
         self.write_strcmp_prologue(n.command)
 
         field_name = makename(n)
@@ -491,6 +502,7 @@ class GenerateParserVisitor(Visitor):
         self.write_strcmp_epilogue()
 
 def genopts(patterns):
+    # type: (List[str])->None
     parsed = parse_pattern(patterns[0].strip())
     #print(parsed)
 
@@ -502,8 +514,8 @@ def genopts(patterns):
     # Generate the struct cli by calling the generate
     # visitor with a /dev/zero sink. This will fill the
     # field_names dictionary
-    field_names = dict()
-    option_cmd_parents = dict()
+    field_names = dict() # type: Dict[str,str]
+    option_cmd_parents = dict() # type: Dict[Union[Pattern,Command,Optional,OptionWithArg],List[int]]
     navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names, option_cmd_parents))
     sorted_field_names = sorted([k for k in field_names])
 
