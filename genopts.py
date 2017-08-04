@@ -579,7 +579,7 @@ def genopts(patterns):
 
     # Generate the struct cli by calling the generate
     # visitor with a /dev/zero sink. This will fill the
-    # field_names dictionary
+    # field_names dictionary, parent_map, and command_index_map
     field_names = dict() # type: Dict[str,str]
     parent_map = ParentMap()
     command_index_map = CommandIndexMap()
