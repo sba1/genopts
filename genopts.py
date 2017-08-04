@@ -409,12 +409,58 @@ def makename(o):
             return makecname(o.command)
     sys.exit("Wrong class type")
 
+class ParentMap:
+    """
+    Instances of this class represent the possible parents of an option_with_arg
+    or command.
+    """
+    def __init__(self):
+        # type: () -> None
+        self.parents = dict() # type: Dict[str,List[Command]]
+
+    def add_option(self, option_with_arg, parent):
+        # type: (OptionWithArg, Command) -> None
+        name = option_with_arg.command
+        if name in self.parents:
+            self.parents[name].append(parent)
+        else:
+            self.parents[name] = [parent]
+
+    def add_command(self, command, parent):
+        # type: (Command, Command) -> None
+        name = command.command
+        if name in self.parents:
+            self.parents[name].append(parent)
+        else:
+            self.parents[name] = [parent]
+
+class CommandIndexMap:
+    """Instances of this class provide a numeric index to a given command"""
+    def __init__(self):
+        # type: () -> None
+        self.index = dict() # type: Dict[str,int]
+        self.cur_num = 2
+
+    def map(self, command):
+        # type: (Command) -> int
+        """
+        Map the given command to an index. Command indices start with 2
+        because 0 and 1 has a special meaning.
+        """
+        if command is None:
+            return 1
+        if command.command in self.index:
+            return self.index[command.command]
+        self.index[command.command] = self.cur_num
+        self.cur_num = self.cur_num + 1
+        return self.index[command.command]
+
 class GenerateParserVisitor(Visitor):
     """
     Vistor that generates the parsing of the command line arguments
     """
-    def __init__(self, gf, field_names, option_cmd_parents):
-        # type: (GenFile, Dict[str,str], Dict[Union[Pattern,Command,Optional,OptionWithArg],List[int]]) -> None
+    def __init__(self, gf, field_names, option_cmd_parents, command_index_map, parent_map):
+        # type: (GenFile, Dict[str,str], Dict[Union[Pattern,Command,Optional,OptionWithArg],List[int]], CommandIndexMap, ParentMap) -> None
         """
         Constructs the visitor.
 
@@ -429,15 +475,21 @@ class GenerateParserVisitor(Visitor):
         option_cmd_parents:
             A dictionary of the possible parents of a command. This will be
             modified by the visitor.
+        parent_map:
+            Filled by this functions. Corresponds to a map from commands or
+            options to commands.
         """
         self.gf = gf
         self.first = True
         self.field_names = field_names
         self.option_cmd_parents = option_cmd_parents
+        self.command_index_map = command_index_map
+        self.parent_map = parent_map
         self.first = True
+
         # Start with 1 in case there options without commands and 0 means not
         # initialized
-        self.cur_command = 1
+        self.cur_command = None # type: Command
 
     def write_strcmp_prologue(self, str):
         # type: (str) -> None
@@ -469,15 +521,19 @@ class GenerateParserVisitor(Visitor):
         self.field_names[field_name] = "int"
         self.field_names[pos_name] = "int"
 
+        # Remember parent
+        self.parent_map.add_command(n, self.cur_command)
+
         # This was a proper command, level up command index
-        self.cur_command = self.cur_command + 1
+        self.cur_command = n
+        cur_command_idx = self.command_index_map.map(n)
 
         self.gf.writeline("cli->{0} = 1;".format(field_name))
         self.gf.writeline("cli->{0} = i;".format(pos_name))
-        self.gf.writeline("cur_command = {0};".format(self.cur_command))
+        self.gf.writeline("cur_command = {0};".format(cur_command_idx))
 
         # Remember our parent, for now only one parent
-        self.option_cmd_parents[n] = [self.cur_command]
+        self.option_cmd_parents[n] = [cur_command_idx]
 
         self.write_strcmp_epilogue()
 
@@ -498,7 +554,10 @@ class GenerateParserVisitor(Visitor):
         self.remember_pos(field_name)
 
         # Remember our parent, for now only one parent
-        self.option_cmd_parents[n] = [self.cur_command]
+        self.option_cmd_parents[n] = [self.command_index_map.map(self.cur_command)]
+
+        # Remember parent
+        self.parent_map.add_option(n, self.cur_command)
 
         self.write_strcmp_epilogue()
 
@@ -517,7 +576,9 @@ def genopts(patterns):
     # field_names dictionary
     field_names = dict() # type: Dict[str,str]
     option_cmd_parents = dict() # type: Dict[Union[Pattern,Command,Optional,OptionWithArg],List[int]]
-    navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names, option_cmd_parents))
+    parent_map = ParentMap()
+    command_index_map = CommandIndexMap()
+    navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names, option_cmd_parents, command_index_map, parent_map))
     sorted_field_names = sorted([k for k in field_names])
 
     gf.writeline()
@@ -543,7 +604,9 @@ def genopts(patterns):
 
     field_names = dict()
     option_cmd_parents = dict()
-    navigate(parsed, GenerateParserVisitor(gf, field_names, option_cmd_parents))
+    command_index_map = CommandIndexMap()
+    parent_map = ParentMap()
+    navigate(parsed, GenerateParserVisitor(gf, field_names, option_cmd_parents, command_index_map, parent_map))
 
     gf.writeline("else")
     gf.writeline("{")
