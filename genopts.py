@@ -364,10 +364,11 @@ class GenerateMXValidatorVisitor(Visitor):
 ################################################################################
 
 class GenerateCommandValidatorVisitor(Visitor):
-    def __init__(self, gf, option_cmd_parents):
-        # type: (GenFile,Dict[Union[Pattern,Command,Optional,OptionWithArg],List[int]])->None
+    def __init__(self, gf, command_index_map, parent_map):
+        # type: (GenFile, CommandIndexMap, ParentMap)->None
         self.gf = gf
-        self.option_cmd_parents = option_cmd_parents
+        self.command_index_map = command_index_map
+        self.parent_map = parent_map
 
     def visit_command(self, n):
         # type: (Command)->None
@@ -377,8 +378,9 @@ class GenerateCommandValidatorVisitor(Visitor):
         # type: (OptionWithArg)->None
         name = makename(n)
         cur_command_name = name + "_cmd"
-        assert len(self.option_cmd_parents[n]) == 1
-        self.gf.writeline("if (cli->{0} != 0 && cli->{0} != {1})".format(cur_command_name, self.option_cmd_parents[n][0]))
+        parents = self.parent_map.parents_of_option(n)
+        assert len(parents) == 1
+        self.gf.writeline("if (cli->{0} != 0 && cli->{0} != {1})".format(cur_command_name, self.command_index_map.map(parents[0])))
         self.gf.writeline("{")
         self.gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command,self.cur_command_name))
         self.gf.writeline("return 0;")
@@ -434,6 +436,20 @@ class ParentMap:
         else:
             self.parents[name] = [parent]
 
+    def parents_of_command(self, command):
+        # type: (Command) -> List[Command]
+        name = command.command
+        if name in self.parents:
+            return self.parents[name]
+        return [];
+
+    def parents_of_option(self, option_with_arg):
+        # type: (OptionWithArg) -> List[Command]
+        name = option_with_arg.command
+        if name in self.parents:
+            return self.parents[name]
+        return []
+
 class CommandIndexMap:
     """Instances of this class provide a numeric index to a given command"""
     def __init__(self):
@@ -459,8 +475,8 @@ class GenerateParserVisitor(Visitor):
     """
     Vistor that generates the parsing of the command line arguments
     """
-    def __init__(self, gf, field_names, option_cmd_parents, command_index_map, parent_map):
-        # type: (GenFile, Dict[str,str], Dict[Union[Pattern,Command,Optional,OptionWithArg],List[int]], CommandIndexMap, ParentMap) -> None
+    def __init__(self, gf, field_names, command_index_map, parent_map):
+        # type: (GenFile, Dict[str,str], CommandIndexMap, ParentMap) -> None
         """
         Constructs the visitor.
 
@@ -472,9 +488,6 @@ class GenerateParserVisitor(Visitor):
             A dictionary in which all required field names of the struct
             are stored including their type. This will be modified by the
             visitor.
-        option_cmd_parents:
-            A dictionary of the possible parents of a command. This will be
-            modified by the visitor.
         parent_map:
             Filled by this functions. Corresponds to a map from commands or
             options to commands.
@@ -482,7 +495,6 @@ class GenerateParserVisitor(Visitor):
         self.gf = gf
         self.first = True
         self.field_names = field_names
-        self.option_cmd_parents = option_cmd_parents
         self.command_index_map = command_index_map
         self.parent_map = parent_map
         self.first = True
@@ -532,9 +544,6 @@ class GenerateParserVisitor(Visitor):
         self.gf.writeline("cli->{0} = i;".format(pos_name))
         self.gf.writeline("cur_command = {0};".format(cur_command_idx))
 
-        # Remember our parent, for now only one parent
-        self.option_cmd_parents[n] = [cur_command_idx]
-
         self.write_strcmp_epilogue()
 
     def visit_option_with_arg(self, n):
@@ -552,9 +561,6 @@ class GenerateParserVisitor(Visitor):
             self.gf.writeline("if (++i == argc) break;")
             self.gf.writeline("cli->{0} = argv[i];".format(field_name))
         self.remember_pos(field_name)
-
-        # Remember our parent, for now only one parent
-        self.option_cmd_parents[n] = [self.command_index_map.map(self.cur_command)]
 
         # Remember parent
         self.parent_map.add_option(n, self.cur_command)
@@ -575,10 +581,9 @@ def genopts(patterns):
     # visitor with a /dev/zero sink. This will fill the
     # field_names dictionary
     field_names = dict() # type: Dict[str,str]
-    option_cmd_parents = dict() # type: Dict[Union[Pattern,Command,Optional,OptionWithArg],List[int]]
     parent_map = ParentMap()
     command_index_map = CommandIndexMap()
-    navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names, option_cmd_parents, command_index_map, parent_map))
+    navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names, command_index_map, parent_map))
     sorted_field_names = sorted([k for k in field_names])
 
     gf.writeline()
@@ -603,10 +608,9 @@ def genopts(patterns):
     gf.writeline("{")
 
     field_names = dict()
-    option_cmd_parents = dict()
     command_index_map = CommandIndexMap()
     parent_map = ParentMap()
-    navigate(parsed, GenerateParserVisitor(gf, field_names, option_cmd_parents, command_index_map, parent_map))
+    navigate(parsed, GenerateParserVisitor(gf, field_names, command_index_map, parent_map))
 
     gf.writeline("else")
     gf.writeline("{")
@@ -621,7 +625,7 @@ def genopts(patterns):
     # Generates the validation function
     gf.writeline("static int validate_cli(struct cli *cli)")
     gf.writeline("{")
-    navigate(parsed, GenerateCommandValidatorVisitor(gf, option_cmd_parents))
+    navigate(parsed, GenerateCommandValidatorVisitor(gf, command_index_map, parent_map))
     navigate(parsed, GenerateMXValidatorVisitor(gf))
     gf.writeline("return 1;")
     gf.writeline("}")
