@@ -575,7 +575,8 @@ class GenerateParserVisitor(Visitor):
 
 def genopts(patterns):
     # type: (List[str])->None
-    parsed = parse_pattern(patterns[0].strip())
+    parse_trees = [parse_pattern(p.strip()) for p in patterns]
+    parsed = parse_trees[0]
     #print(parsed)
 
     gf = GenFile()
