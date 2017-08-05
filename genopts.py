@@ -256,6 +256,7 @@ def parse_pattern(pattern):
         if next_rem is not None:
             l.append(command)
         else:
+            # TODO: Add dummy command
             next_rem, optional = parse_optional(rem)
             l.append(optional)
         if next_rem is None:
