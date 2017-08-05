@@ -337,13 +337,15 @@ class GenerateMXValidatorVisitor(Visitor):
     """
     def __init__(self, gf):
         # type: (GenFile)->None
-        self.cmds = [] # type: List[Optional]
+        self.cmds = [] # type: List[OptionWithArg]
         self.gf = gf
 
     def enter_optional(self, n):
-        self.cmds = []
+        # type: (Optional) -> None
+        self.cmds = [] # type: List[OptionWithArg]
 
     def leave_optional(self, n):
+        # type: (Optional) -> None
         if len(self.cmds) < 2:
             return
 
@@ -360,6 +362,7 @@ class GenerateMXValidatorVisitor(Visitor):
         self.gf.writeline("}")
 
     def visit_option_with_arg(self, n):
+        # type: (OptionWithArg) -> None
         self.cmds.append(n)
 
 ################################################################################
@@ -634,6 +637,7 @@ def genopts(patterns):
     gf.writeline("}")
 
 def main():
+    # type: ()->None
     lines = sys.stdin.readlines()
     if len(lines) < 1:
         sys.exit("Input must contain at least one line")
