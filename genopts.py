@@ -488,6 +488,8 @@ class GenerateParserVisitor(Visitor):
             A dictionary in which all required field names of the struct
             are stored including their type. This will be modified by the
             visitor.
+        command_index_map:
+            Filled by this function. Associates an integer index with a command.
         parent_map:
             Filled by this functions. Corresponds to a map from commands or
             options to commands.
