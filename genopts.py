@@ -489,6 +489,10 @@ class TokenActionMap:
         # type: () -> None
         self.token_action_map = dict() # type: Dict[str,List[str]]
 
+    def __contains__(self, item):
+        # type: (str) -> bool
+        return item in self.token_action_map
+
     def add(self, token, action):
         # type: (str, str) -> None
         if token not in self.token_action_map:
