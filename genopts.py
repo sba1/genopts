@@ -481,19 +481,47 @@ class CommandIndexMap:
         self.cur_num = self.cur_num + 1
         return self.index[command.command]
 
+class TokenActionMap:
+    """
+    Instances of this class represent token and their actions.
+    """
+    def __init__(self):
+        # type: () -> None
+        self.token_action_map = dict() # type: Dict[str,List[str]]
+
+    def add(self, token, action):
+        # type: (str, str) -> None
+        if token not in self.token_action_map:
+            self.token_action_map[token] = []
+        self.token_action_map[token].append(action)
+
+    def write(self, gf):
+        # type: (GenFile) -> None
+        sorted_tokens = sorted([t for t in self.token_action_map])
+        first = True
+        for token in sorted_tokens:
+            if first:
+                gf.writeline('if (!strcmp("{0}", argv[i]))'.format(token))
+                first = False
+            else:
+                gf.writeline('else if (!strcmp("{0}", argv[i]))'.format(token))
+
+            gf.writeline("{")
+            for a in self.token_action_map[token]:
+                gf.writeline(a)
+            gf.writeline("}")
+
 class GenerateParserVisitor(Visitor):
     """
     Vistor that generates the parsing of the command line arguments
     """
-    def __init__(self, gf, field_names, command_index_map, parent_map):
-        # type: (GenFile, Dict[str,str], CommandIndexMap, ParentMap) -> None
+    def __init__(self, field_names, command_index_map, parent_map, token_action_map):
+        # type: (Dict[str,str], CommandIndexMap, ParentMap, TokenActionMap) -> None
         """
         Constructs the visitor.
 
         Parameters
         ----------
-        gf: GenFile
-            Where the generated code is written to
         field_names:
             A dictionary in which all required field names of the struct
             are stored including their type. This will be modified by the
@@ -503,41 +531,29 @@ class GenerateParserVisitor(Visitor):
         parent_map:
             Filled by this functions. Corresponds to a map from commands or
             options to commands.
+        token_action_map:
+            Filled by this visitor. Will hole all relevant tokens with their
+            action.
         """
-        self.gf = gf
-        self.first = True
         self.field_names = field_names
         self.command_index_map = command_index_map
         self.parent_map = parent_map
+        self.token_action_map = token_action_map
         self.first = True
 
         # Start with 1 in case there options without commands and 0 means not
         # initialized
         self.cur_command = None # type: Command
 
-    def write_strcmp_prologue(self, str):
-        # type: (str) -> None
-        if self.first:
-            self.gf.writeline('if (!strcmp("{0}", argv[i]))'.format(str))
-            self.first = False
-        else:
-            self.gf.writeline('else if (!strcmp("{0}", argv[i]))'.format(str))
-        self.gf.writeline('{')
-
-    def write_strcmp_epilogue(self):
-        # type: () -> None
-        self.gf.writeline('}')
-
-    def remember_pos(self, field_name):
-        # type: (str) -> None
+    def remember_pos(self, token, field_name):
+        # type: (str, str) -> None
         cur_command_name = field_name + "_cmd"
         self.field_names[cur_command_name] = "int"
-        self.gf.writeline("cli->{0} = cur_command;".format(cur_command_name))
+        self.token_action_map.add(token, "cli->{0} = cur_command;".format(cur_command_name))
 
     def visit_command(self, n):
         # type: (Command) -> None
         cmd = n.command
-        self.write_strcmp_prologue(cmd)
 
         field_name = makename(n)
         pos_name = field_name + "_pos"
@@ -552,32 +568,27 @@ class GenerateParserVisitor(Visitor):
         self.cur_command = n
         cur_command_idx = self.command_index_map.map(n)
 
-        self.gf.writeline("cli->{0} = 1;".format(field_name))
-        self.gf.writeline("cli->{0} = i;".format(pos_name))
-        self.gf.writeline("cur_command = {0};".format(cur_command_idx))
-
-        self.write_strcmp_epilogue()
+        self.token_action_map.add(cmd, "cli->{0} = 1;".format(field_name))
+        self.token_action_map.add(cmd, "cli->{0} = i;".format(pos_name))
+        self.token_action_map.add(cmd, "cur_command = {0};".format(cur_command_idx))
 
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg) -> None
-        self.write_strcmp_prologue(n.command)
-
         field_name = makename(n)
         if n.arg == None:
             self.field_names[field_name] = "int"
-            self.gf.writeline("cli->{0} = 1;".format(field_name))
+            self.token_action_map.add(n.command, "cli->{0} = 1;".format(field_name))
         else:
             self.field_names[field_name] = "char *"
             field_name = makename(n)
 
-            self.gf.writeline("if (++i == argc) break;")
-            self.gf.writeline("cli->{0} = argv[i];".format(field_name))
-        self.remember_pos(field_name)
+            self.token_action_map.add(n.command, "if (++i == argc) break;")
+            self.token_action_map.add(n.command, "cli->{0} = argv[i];".format(field_name))
+
+        self.remember_pos(n.command, field_name)
 
         # Remember parent
         self.parent_map.add_option(n, self.cur_command)
-
-        self.write_strcmp_epilogue()
 
 def genopts(patterns):
     # type: (List[str])->None
@@ -596,7 +607,8 @@ def genopts(patterns):
     field_names = dict() # type: Dict[str,str]
     parent_map = ParentMap()
     command_index_map = CommandIndexMap()
-    navigate(parsed, GenerateParserVisitor(GenFile(f=open("/dev/zero", "w")), field_names, command_index_map, parent_map))
+    token_action_map = TokenActionMap()
+    navigate(parsed, GenerateParserVisitor(field_names, command_index_map, parent_map, token_action_map))
     sorted_field_names = sorted([k for k in field_names])
 
     gf.writeline()
@@ -623,8 +635,10 @@ def genopts(patterns):
     field_names = dict()
     command_index_map = CommandIndexMap()
     parent_map = ParentMap()
-    navigate(parsed, GenerateParserVisitor(gf, field_names, command_index_map, parent_map))
+    token_action_map = TokenActionMap()
+    navigate(parsed, GenerateParserVisitor(field_names, command_index_map, parent_map, token_action_map))
 
+    token_action_map.write(gf)
     gf.writeline("else")
     gf.writeline("{")
     gf.writeline('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
