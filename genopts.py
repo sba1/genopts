@@ -33,6 +33,7 @@ class Command:
         self.options = options
         self.subcommand = subcommand
     def __repr__(self):
+        # type: ()->str
         if self.subcommand != None:
             subcommand = ", " + repr(self.subcommand)
         else:
@@ -46,6 +47,7 @@ class OptionWithArg:
         self.command = command
         self.arg = arg
     def __repr__(self):
+        # type: ()->str
         if self.arg == None:
             arg = ""
         else:
@@ -58,6 +60,7 @@ class Optional:
         # type: (List[OptionWithArg])->None
         self.list = list
     def __repr__(self):
+        # type: ()->str
         return "Optional(" + repr(self.list) + ")"
 
 class Pattern:
@@ -66,11 +69,13 @@ class Pattern:
         # type: (List[Command])->None
         self.list = list
     def __repr__(self):
+        # type: ()->str
         return "Pattern(" + repr(self.list) + ")"
 
 ################################################################################
 
 def skip_spaces(text):
+    # type: (str) -> str
     if len(text) == 0: return text
 
     for i, c in enumerate(text):
@@ -124,6 +129,7 @@ def parse_command(command):
     return rem, Command(command_tk, options, subcommand)
 
 def parse_arg(arg):
+    # type: (str) -> Tuple[str, str]
     is_arg = False
     if len(arg) < 3:
         return None, None
