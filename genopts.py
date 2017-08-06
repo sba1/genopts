@@ -572,28 +572,33 @@ class GenerateParserVisitor(Visitor):
         self.cur_command = n
         cur_command_idx = self.command_index_map.map(n)
 
-        self.token_action_map.add(cmd, "cli->{0} = 1;".format(field_name))
-        self.token_action_map.add(cmd, "cli->{0} = i;".format(pos_name))
-        self.token_action_map.add(cmd, "cur_command = {0};".format(cur_command_idx))
+        if cmd not in self.token_action_map:
+            self.token_action_map.add(cmd, "cli->{0} = 1;".format(field_name))
+            self.token_action_map.add(cmd, "cli->{0} = i;".format(pos_name))
+            self.token_action_map.add(cmd, "cur_command = {0};".format(cur_command_idx))
 
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg) -> None
-        field_name = makename(n)
-        option = n.command
-        if n.arg == None:
-            self.field_names[field_name] = "int"
-            self.token_action_map.add(option, "cli->{0} = 1;".format(field_name))
-        else:
-            self.field_names[field_name] = "char *"
-            field_name = makename(n)
-
-            self.token_action_map.add(option, "if (++i == argc) break;")
-            self.token_action_map.add(option, "cli->{0} = argv[i];".format(field_name))
-
-        self.remember_pos(option, field_name)
 
         # Remember parent
         self.parent_map.add_option(n, self.cur_command)
+
+        option = n.command
+
+        # Write token action if not already done before
+        if option not in self.token_action_map:
+            field_name = makename(n)
+            if n.arg == None:
+                self.field_names[field_name] = "int"
+                self.token_action_map.add(option, "cli->{0} = 1;".format(field_name))
+            else:
+                self.field_names[field_name] = "char *"
+                field_name = makename(n)
+
+                self.token_action_map.add(option, "if (++i == argc) break;")
+                self.token_action_map.add(option, "cli->{0} = argv[i];".format(field_name))
+
+            self.remember_pos(option, field_name)
 
 def genopts(patterns):
     # type: (List[str])->None
