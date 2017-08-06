@@ -380,19 +380,16 @@ class GenerateCommandValidatorVisitor(Visitor):
         self.command_index_map = command_index_map
         self.parent_map = parent_map
 
-    def visit_command(self, n):
-        # type: (Command)->None
-        self.cur_command_name = n.command
-
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg)->None
         name = makename(n)
         cur_command_name = name + "_cmd"
         parents = self.parent_map.parents_of_option(n)
+        parent_names = [p.command for p in parents]
         assert len(parents) == 1
         self.gf.writeline("if (cli->{0} != 0 && cli->{0} != {1})".format(cur_command_name, self.command_index_map.map(parents[0])))
         self.gf.writeline("{")
-        self.gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command,self.cur_command_name))
+        self.gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command, parent_names[0]))
         self.gf.writeline("return 0;")
         self.gf.writeline("}")
 
