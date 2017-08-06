@@ -601,9 +601,6 @@ def genopts(patterns):
     gf.writeline("#include <stdio.h>")
     gf.writeline("#include <string.h>")
 
-    # Generate the struct cli by calling the generate
-    # visitor with a /dev/zero sink. This will fill the
-    # field_names dictionary, parent_map, and command_index_map
     field_names = dict() # type: Dict[str,str]
     parent_map = ParentMap()
     command_index_map = CommandIndexMap()
@@ -632,13 +629,8 @@ def genopts(patterns):
     gf.writeline("for (i=0; i < argc; i++)")
     gf.writeline("{")
 
-    field_names = dict()
-    command_index_map = CommandIndexMap()
-    parent_map = ParentMap()
-    token_action_map = TokenActionMap()
-    navigate(parsed, GenerateParserVisitor(field_names, command_index_map, parent_map, token_action_map))
-
     token_action_map.write(gf)
+
     gf.writeline("else")
     gf.writeline("{")
     gf.writeline('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
