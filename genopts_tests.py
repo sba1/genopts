@@ -13,12 +13,14 @@ import unittest
 
 class TestParser(unittest.TestCase):
     def test_combine(self):
+        # type: () -> None
         self.assertEquals(['aba', 'abca'], combine(['ab','abc'],['a']))
         self.assertEquals(['aba', 'abca'], combine(['a'],['ba', 'bca']))
         self.assertEquals(['aba', 'abca'], combine(['aba', 'abca'], ['']))
         self.assertEquals([], combine(['aba', 'abca'], []))
 
     def test_parse_optional_simple(self):
+        # type: () -> None
         rem, parse_tree = parse_optional("[--option]")
         self.assertEquals('', rem)
         self.assertTrue(isinstance(parse_tree, Optional))
@@ -27,6 +29,7 @@ class TestParser(unittest.TestCase):
         self.assertEquals("--option", parse_tree.list[0].command)
 
     def test_parse_optional_mx(self):
+        # type: () -> None
         rem, parse_tree = parse_optional("[--option|--no-option]")
         self.assertEquals('', rem)
         self.assertTrue(isinstance(parse_tree, Optional))
@@ -37,6 +40,7 @@ class TestParser(unittest.TestCase):
         self.assertEquals("--no-option", parse_tree.list[1].command)
 
     def test_parse_optional_short(self):
+        # type: () -> None
         rem, parse_tree = parse_optional("[--[no-]option]")
         self.assertEquals('', rem)
         self.assertTrue(isinstance(parse_tree, Optional))
