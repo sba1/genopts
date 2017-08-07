@@ -72,6 +72,15 @@ class Pattern:
         # type: ()->str
         return "Pattern(" + repr(self.list) + ")"
 
+class Template:
+    """Contains patterns"""
+    def __init__(self, list):
+        # type: (List[Template])->None
+        self.list = list
+    def __repr__(self):
+        # type: ()->str
+        return "Template(" + repr(self.list) + ")"
+
 ################################################################################
 
 def skip_spaces(text):
@@ -312,10 +321,13 @@ class Visitor:
 # Similar to accept() but does implement the naviation
 # in a monolitic fashion
 def navigate(n, visitor):
-    # type: (Union[Pattern,Command,Optional,OptionWithArg], Visitor)->None
+    # type: (Union[Template, Pattern, Command, Optional, OptionWithArg], Visitor) -> None
     """
     Navigate through the hierarchy starting at n and call the visitor
     """
+    if isinstance(n, Template):
+        for t in n.list:
+            navigate(t, visitor)
     if isinstance(n, Pattern):
         visitor.enter_pattern(n)
         for c in n.list:
@@ -373,25 +385,34 @@ class GenerateMXValidatorVisitor(Visitor):
 
 ################################################################################
 
-class GenerateCommandValidatorVisitor(Visitor):
-    def __init__(self, gf, command_index_map, parent_map):
-        # type: (GenFile, CommandIndexMap, ParentMap)->None
-        self.gf = gf
-        self.command_index_map = command_index_map
-        self.parent_map = parent_map
+class OptionWithArgExtractorVisitor(Visitor):
+    def __init__(self, option_with_args):
+        # type: (List[OptionWithArg]) -> None
+        self.option_with_args = option_with_args
 
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg)->None
+        self.option_with_args.append(n)
+
+################################################################################
+
+def write_command_validation(gf, command_index_map, parent_map, option_with_args):
+    # type: (GenFile, CommandIndexMap, ParentMap, List[OptionWithArg]) -> None
+    for n in option_with_args:
         name = makename(n)
         cur_command_name = name + "_cmd"
-        parents = self.parent_map.parents_of_option(n)
-        parent_names = [p.command for p in parents]
-        assert len(parents) == 1
-        self.gf.writeline("if (cli->{0} != 0 && cli->{0} != {1})".format(cur_command_name, self.command_index_map.map(parents[0])))
-        self.gf.writeline("{")
-        self.gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command, parent_names[0]))
-        self.gf.writeline("return 0;")
-        self.gf.writeline("}")
+        parents = parent_map.parents_of_option(n)
+        parent_names = [p.command if p is not None else "" for p in parents]
+        parent_indices = [command_index_map.map(p) for p in parents]
+
+        # Make list of conditions
+        conds = ["cli->{0} != {1}".format(cur_command_name, pi) for pi in set(parent_indices)]
+
+        gf.writeline("if (cli->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
+        gf.writeline("{")
+        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command, parent_names[0]))
+        gf.writeline("return 0;")
+        gf.writeline("}")
 
 ################################################################################
 
@@ -600,10 +621,10 @@ class GenerateParserVisitor(Visitor):
 def genopts(patterns):
     # type: (List[str])->None
     parse_trees = [parse_pattern(p.strip()) for p in patterns]
-    parsed = parse_trees[0]
-    #print(parsed)
-
+    template = Template(parse_trees)
+    #print(template)
     gf = GenFile()
+
 
     gf.writeline("#include <stdio.h>")
     gf.writeline("#include <string.h>")
@@ -612,7 +633,7 @@ def genopts(patterns):
     parent_map = ParentMap()
     command_index_map = CommandIndexMap()
     token_action_map = TokenActionMap()
-    navigate(parsed, GenerateParserVisitor(field_names, command_index_map, parent_map, token_action_map))
+    navigate(template, GenerateParserVisitor(field_names, command_index_map, parent_map, token_action_map))
     sorted_field_names = sorted([k for k in field_names])
 
     gf.writeline()
@@ -648,11 +669,14 @@ def genopts(patterns):
     gf.writeline("}")
     gf.writeline()
 
+    option_with_args = [] # type: List[OptionWithArg]
+    navigate(template, OptionWithArgExtractorVisitor(option_with_args))
+
     # Generates the validation function
     gf.writeline("static int validate_cli(struct cli *cli)")
     gf.writeline("{")
-    navigate(parsed, GenerateCommandValidatorVisitor(gf, command_index_map, parent_map))
-    navigate(parsed, GenerateMXValidatorVisitor(gf))
+    write_command_validation(gf, command_index_map, parent_map, option_with_args)
+    navigate(template, GenerateMXValidatorVisitor(gf))
     gf.writeline("return 1;")
     gf.writeline("}")
 
