@@ -640,6 +640,13 @@ def genopts(patterns):
     command_index_map = CommandIndexMap()
     token_action_map = TokenActionMap()
     navigate(template, GenerateParserVisitor(field_names, command_index_map, parent_map, token_action_map))
+
+    if "--help" not in token_action_map:
+        field_names["help"] = "int"
+        field_names["help_cmd"] = "int"
+        token_action_map.add("--help", "cli->help = 1;")
+        token_action_map.add("--help", "cli->help_cmd = cur_command;")
+
     sorted_field_names = sorted([k for k in field_names])
 
     gf.writeline()
