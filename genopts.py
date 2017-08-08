@@ -402,15 +402,21 @@ def write_command_validation(gf, command_index_map, parent_map, option_with_args
         name = makename(n)
         cur_command_name = name + "_cmd"
         parents = parent_map.parents_of_option(n)
-        parent_names = [p.command if p is not None else "" for p in parents]
+        parent_names = [p.command for p in parents if p is not None]
         parent_indices = [command_index_map.map(p) for p in parents]
 
         # Make list of conditions
         conds = ["cli->{0} != {1}".format(cur_command_name, pi) for pi in set(parent_indices)]
+        valid_commands = ['\\"' + vc + '\\"' for vc in parent_names]
+        if len(valid_commands) == 2:
+            valid_commands_text = valid_commands[0] + " and " + valid_commands[1]
+        else:
+            valid_commands_text = ", ".join(valid_commands)
+        valid_commands_text = valid_commands_text + " command"
 
         gf.writeline("if (cli->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
         gf.writeline("{")
-        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the \\\"{1}\\\" command\\n\");".format(n.command, parent_names[0]))
+        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the {1}\\n\");".format(n.command, valid_commands_text))
         gf.writeline("return 0;")
         gf.writeline("}")
 
