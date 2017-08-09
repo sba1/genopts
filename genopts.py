@@ -386,12 +386,18 @@ class GenerateMXValidatorVisitor(Visitor):
 ################################################################################
 
 class OptionWithArgExtractorVisitor(Visitor):
-    def __init__(self, option_with_args):
-        # type: (List[OptionWithArg]) -> None
+    def __init__(self, avoid_duplicates, option_with_args):
+        # type: (bool, List[OptionWithArg]) -> None
         self.option_with_args = option_with_args
+        self.avoid_duplicates = avoid_duplicates
+        self.names = set() # type: Set[str]
 
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg)->None
+        if self.avoid_duplicates:
+            if n.command in self.names:
+                return
+            self.names.add(n.command)
         self.option_with_args.append(n)
 
 ################################################################################
@@ -683,7 +689,7 @@ def genopts(patterns):
     gf.writeline()
 
     option_with_args = [] # type: List[OptionWithArg]
-    navigate(template, OptionWithArgExtractorVisitor(option_with_args))
+    navigate(template, OptionWithArgExtractorVisitor(True, option_with_args))
 
     # Generates the validation function
     gf.writeline("static int validate_cli(struct cli *cli)")
