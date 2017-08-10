@@ -299,6 +299,12 @@ class GenFile:
 
 # Poor man's visitor
 class Visitor:
+    def enter_template(self, n):
+        # type: (Template) -> None
+        pass
+    def leave_template(self, n):
+        # type: (Template) -> None
+        pass
     def enter_pattern(self, n):
         # type: (Pattern)->None
         pass
@@ -326,8 +332,10 @@ def navigate(n, visitor):
     Navigate through the hierarchy starting at n and call the visitor
     """
     if isinstance(n, Template):
+        visitor.enter_template(n)
         for t in n.list:
             navigate(t, visitor)
+        visitor.leave_template(n)
     if isinstance(n, Pattern):
         visitor.enter_pattern(n)
         for c in n.list:
