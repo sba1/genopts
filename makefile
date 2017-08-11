@@ -19,12 +19,12 @@ $(TEST_GENOPTS_SRCS): test_%_cli.c: %.genopts genopts.py
 	cat $< | ./genopts.py >$@
 
 # Generate a single executable for the given cli source file
-$(TEST_GENOPTS): test_%_cli: test_%_cli.c
+$(TEST_GENOPTS): test_%_cli: test_%_cli.c test.c
 	gcc -ggdb -include $< test.c -o $@
 
 # Generate a main executable that should be paramterized via all included
 # genopts
-test: $(TEST_GENOPTS)
+test: test.c $(TEST_GENOPTS)
 	cat $(GENOPTS) | ./genopts.py >test_cli.c
 	gcc -ggdb -include test_cli.c test.c -o test
 
