@@ -436,6 +436,27 @@ def write_command_validation(gf, command_index_map, parent_map, option_with_args
 
 ################################################################################
 
+class CommandListExtractorVisitor(Visitor):
+    def __init__(self, gf, all_commands):
+        # type: (GenFile, List[List[Command]]) -> None
+        self.gf = gf
+        self.all_commands = all_commands # type: List[List[Command]]
+        self.commands = [] # type: List[Command]
+
+    def enter_pattern(self, n):
+        # type: (Pattern) -> None
+        self.commands = [] # type: List[Command]
+
+    def leave_pattern(self, n):
+        # type: (Pattern) -> None
+        self.all_commands.append(self.commands)
+
+    def visit_command(self, n):
+        # type: (Command) -> None
+        self.commands.append(n)
+
+################################################################################
+
 def is_flag(str):
     # type: (str)->bool
     return str[0] == '-'
@@ -697,13 +718,32 @@ def genopts(patterns):
     gf.writeline()
 
     option_with_args = [] # type: List[OptionWithArg]
+    all_commands = [] # type: List[List[Command]]
     navigate(template, OptionWithArgExtractorVisitor(True, option_with_args))
+    navigate(template, CommandListExtractorVisitor(gf, all_commands))
 
     # Generates the validation function
     gf.writeline("static int validate_cli(struct cli *cli)")
     gf.writeline("{")
     write_command_validation(gf, command_index_map, parent_map, option_with_args)
     navigate(template, GenerateMXValidatorVisitor(gf))
+
+    # Proper commands specified
+    first = True
+    for commands in all_commands:
+        conds = [] # type: List[str]
+        for command in commands:
+            conds.append("cli->{0}".format(makename(command)))
+        gf.writeline("{0} ({1})".format("if" if first else "else if", " && ".join(conds)))
+        gf.writeline("{")
+        gf.writeline("}")
+        first = False
+    if not first:
+        gf.writeline("else")
+        gf.writeline("{")
+        gf.writeline('fprintf(stderr,"Please specify a proper command\\n");')
+        gf.writeline("}")
+
     gf.writeline("return 1;")
     gf.writeline("}")
 
