@@ -741,7 +741,7 @@ def genopts(patterns):
     if not first:
         gf.writeline("else")
         gf.writeline("{")
-        gf.writeline('fprintf(stderr,"Please specify a proper command\\n");')
+        gf.writeline('fprintf(stderr,"Please specify a proper command. Use --help for usage.\\n");')
         gf.writeline("}")
 
     gf.writeline("return 1;")
