@@ -747,6 +747,7 @@ def genopts(patterns):
     gf.writeline("return 1;")
     gf.writeline("}")
 
+    gf.writeline()
     gf.writeline("/**")
     gf.writeline(" * Print usage for the given cli.")
     gf.writeline(" *")
