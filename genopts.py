@@ -758,7 +758,9 @@ def genopts(patterns):
     gf.writeline("{")
     gf.writeline("return 0;")
     gf.writeline("}")
-    gf.writeline('fprintf(stderr, "usage: %s {0}\\n", cmd);'.format(patterns[0].strip()))
+    gf.writeline('fprintf(stderr, "usage: %s <command> [<options>]\\n", cmd);'.format(patterns[0].strip()))
+    for pattern in sorted(patterns):
+        gf.writeline('fprintf(stderr, "{0}\\n");'.format(pattern.strip()))
     gf.writeline("return 1;")
     gf.writeline("}")
 def main():
