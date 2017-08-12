@@ -747,6 +747,20 @@ def genopts(patterns):
     gf.writeline("return 1;")
     gf.writeline("}")
 
+    gf.writeline("/**")
+    gf.writeline(" * Print usage for the given cli.")
+    gf.writeline(" *")
+    gf.writeline(" * @return 1 if usage has been printed, 0 otherwise.")
+    gf.writeline(" */")
+    gf.writeline("static int usage_cli(char *cmd, struct cli *cli)")
+    gf.writeline("{")
+    gf.writeline("if (!cli->help)")
+    gf.writeline("{")
+    gf.writeline("return 0;")
+    gf.writeline("}")
+    gf.writeline('fprintf(stderr, "usage: %s {0}\\n", cmd);'.format(patterns[0].strip()))
+    gf.writeline("return 1;")
+    gf.writeline("}")
 def main():
     # type: ()->None
     lines = sys.stdin.readlines()

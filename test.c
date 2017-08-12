@@ -12,5 +12,6 @@ int main(int argc, char **argv)
 	{
 		return -1;
 	}
+	usage_cli(argv[0], &cli);
 	return 0;
 }
