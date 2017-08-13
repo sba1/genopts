@@ -112,6 +112,8 @@ def parse_command_token(command):
     if i==0:
         return None, None
 
+    if not is_special(c):
+        i = i + 1
     return command[i:], command[:i]
 
 def parse_command(command):

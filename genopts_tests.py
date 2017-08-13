@@ -19,6 +19,16 @@ class TestParser(unittest.TestCase):
         self.assertEquals(['aba', 'abca'], combine(['aba', 'abca'], ['']))
         self.assertEquals([], combine(['aba', 'abca'], []))
 
+    def test_parse_command_token(self):
+        # type: () -> None
+        rem, command_tk = parse_command_token("cmd1 --option")
+        self.assertEquals('cmd1', command_tk)
+        self.assertEquals(' --option', rem)
+
+        rem, command_tk = parse_command_token("cmd")
+        self.assertEquals('cmd', command_tk)
+        self.assertEquals('', rem)
+
     def test_parse_optional_simple(self):
         # type: () -> None
         rem, parse_tree = parse_optional("[--option]")
