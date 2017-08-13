@@ -91,17 +91,23 @@ def skip_spaces(text):
         if c != ' ': break
     return text[i:]
 
+def is_special(c):
+    # type: (str) -> bool
+    if c == ' ':
+        return True
+    if c == '[':
+        return True
+    if c == '|':
+        return True
+    if c == ']':
+        return True
+    return False
+
 def parse_command_token(command):
     # type: (str) -> Tuple[str, str]
     """Parse a command token and return it and and the remainder"""
     for i, c in enumerate(command):
-        if c == ' ':
-            break
-        if c == '[':
-            break
-        if c == '|':
-            break
-        if c == ']':
+        if is_special(c):
             break
     if i==0:
         return None, None
