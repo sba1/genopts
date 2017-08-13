@@ -40,6 +40,17 @@ class Command:
             subcommand = ""
         return "Command(" + self.command + ", " + repr(self.options) + subcommand + ')'
 
+class Arg:
+    """Contains an argument"""
+    def __init__(self, name, varargs=False):
+        # type: (str, bool) -> None
+        self.command = name
+        self.varargs = varargs
+
+    def __repr__(self):
+        # type: () -> str
+        return "Arg(" + self.command + ", varargs=" + str(self.varargs) + ")"
+
 class OptionWithArg:
     """Contains an option with args"""
     def __init__(self, command, arg):
@@ -57,7 +68,7 @@ class OptionWithArg:
 class Optional:
     """Contains a set of mutual exlusive options"""
     def __init__(self, list):
-        # type: (List[OptionWithArg])->None
+        # type: (List[Union[Arg, OptionWithArg]])->None
         self.list = list
     def __repr__(self):
         # type: ()->str
@@ -246,11 +257,20 @@ def parse_optional(optional):
     # type: (str)->Tuple[str,Optional]
     if optional[0] != '[': return None, None
     rem = optional[1:]
-    l = [] # type: List[OptionWithArg]
+    l = [] # type: List[Union[Arg, OptionWithArg]]
     while len(rem) > 0 and rem[0] != ']':
-        elm = None
+        elm = None # type: Union[Arg, OptionWithArg]
         new_rem, elm = parse_command_with_arg(rem)
 
+        if new_rem is None:
+            new_rem, arg = parse_arg(rem)
+            if new_rem is not None:
+                varargs = False
+                if new_rem.startswith('...'):
+                    varargs = True
+                    # skip three dots
+                    new_rem = new_rem[3:]
+                elm = Arg(arg, varargs)
         if new_rem is None:
             new_rem, options = parse_shorted_options(rem)
             if new_rem is not None:
@@ -331,11 +351,14 @@ class Visitor:
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg)->None
         pass
+    def visit_arg(self, n):
+        # type: (Arg)->None
+        pass
 
 # Similar to accept() but does implement the naviation
 # in a monolitic fashion
 def navigate(n, visitor):
-    # type: (Union[Template, Pattern, Command, Optional, OptionWithArg], Visitor) -> None
+    # type: (Union[Template, Pattern, Command, Optional, Arg, OptionWithArg], Visitor) -> None
     """
     Navigate through the hierarchy starting at n and call the visitor
     """
@@ -362,6 +385,8 @@ def navigate(n, visitor):
             navigate(n.subcommand, visitor)
     elif isinstance(n, OptionWithArg):
         visitor.visit_option_with_arg(n)
+    elif isinstance(n, Arg):
+        visitor.visit_arg(n)
 
 ################################################################################
 

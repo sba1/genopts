@@ -65,6 +65,16 @@ class TestParser(unittest.TestCase):
         self.assertIsNotNone(parse_tree)
         self.assertTrue(isinstance(parse_tree, Pattern))
 
+    def test_parse_varargs(self):
+        rem, optional = parse_optional("[<pathspec>...]")
+        self.assertIsNotNone(optional)
+        self.assertIsNotNone(optional)
+        self.assertEquals('', rem)
+        self.assertEquals(1, len(optional.list))
+        self.assertTrue(isinstance(optional.list[0], Arg))
+        self.assertEquals("pathspec", optional.list[0].command)
+        self.assertTrue(optional.list[0].varargs)
+
     def test_parse_two_patterns(self):
         # type: () -> None
         parse_tree = []
