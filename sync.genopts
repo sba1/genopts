@@ -1,0 +1,1 @@
+sync [--fast] [-n | --dry-run] [<files>...]
