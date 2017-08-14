@@ -608,12 +608,52 @@ class TokenActionMap:
                 gf.writeline(a)
             gf.writeline("}")
 
+class PositionalActionMap:
+    """
+    Instances of this class represent positional arguments and their actions.
+    """
+    def __init__(self):
+        # type: () -> None
+        self.action_map = [] # type: List[List[str]]
+        self.last_is_variadic = False
+
+    def add(self, pos, action, variadic=False):
+        # type: (int, str, bool) -> None
+        if self.last_is_variadic:
+            raise RuntimeError("""
+                Adding another positional argument after a variadic one is not supported!
+                """)
+        if len(self.action_map) == pos:
+            self.action_map.append([])
+        elif len(self.action_map) < pos:
+            raise RuntimeError("""
+                Positional arguments must be added consecutively.
+                """)
+
+        self.action_map[pos].append(action)
+        self.last_is_variadic = variadic
+
+    def write(self, gf, first=False):
+        # type: (GenFile, bool) -> None
+        for i, actions in enumerate(self.action_map):
+            if first:
+                el = ''
+                first = False
+            else:
+                el = 'else '
+            gf.writeline('{0}if (cur_position == {1})'.format(el, i))
+
+            gf.writeline("{")
+            for a in actions:
+                gf.writeline(a)
+            gf.writeline("}")
+
 class GenerateParserVisitor(Visitor):
     """
     Vistor that generates the parsing of the command line arguments
     """
-    def __init__(self, field_names, command_index_map, parent_map, token_action_map):
-        # type: (Dict[str,str], CommandIndexMap, ParentMap, TokenActionMap) -> None
+    def __init__(self, field_names, command_index_map, parent_map, token_action_map, positional_action_map):
+        # type: (Dict[str,str], CommandIndexMap, ParentMap, TokenActionMap, PositionalActionMap) -> None
         """
         Constructs the visitor.
 
@@ -631,11 +671,14 @@ class GenerateParserVisitor(Visitor):
         token_action_map:
             Filled by this visitor. Will hold all relevant tokens with their
             action.
+        positional_action_map:
+            Filled by this visitor. Will hold all revelant positional actions.
         """
         self.field_names = field_names
         self.command_index_map = command_index_map
         self.parent_map = parent_map
         self.token_action_map = token_action_map
+        self.positional_action_map = positional_action_map
         self.first = True
 
         # Start with 1 in case there options without commands and 0 means not
@@ -693,6 +736,13 @@ class GenerateParserVisitor(Visitor):
 
             self.remember_pos(option, field_name)
 
+    def visit_arg(self, n):
+        # type: (Arg) -> None
+        field_name = makecname(n.command)
+        self.field_names[field_name] = "char *"
+        self.positional_action_map.add(0, "cli->{0} = argv[i];".format(field_name))
+        self.positional_action_map.add(0, "cur_position++;")
+
 def genopts(patterns):
     # type: (List[str])->None
     parse_trees = [parse_pattern(p.strip()) for p in patterns]
@@ -708,7 +758,9 @@ def genopts(patterns):
     parent_map = ParentMap()
     command_index_map = CommandIndexMap()
     token_action_map = TokenActionMap()
-    navigate(template, GenerateParserVisitor(field_names, command_index_map, parent_map, token_action_map))
+    positional_action_map = PositionalActionMap()
+    navigate(template, GenerateParserVisitor(field_names, command_index_map, 
+        parent_map, token_action_map, positional_action_map))
 
     if "--help" not in token_action_map:
         field_names["help"] = "int"
@@ -736,10 +788,12 @@ def genopts(patterns):
     gf.writeline("{")
     gf.writeline("int i;")
     gf.writeline("int cur_command = -1;")
+    gf.writeline("int cur_position = 0;")
     gf.writeline("for (i=0; i < argc; i++)")
     gf.writeline("{")
 
     token_action_map.write(gf)
+    positional_action_map.write(gf)
 
     gf.writeline("else")
     gf.writeline("{")

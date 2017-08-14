@@ -86,7 +86,9 @@ class TestParser(unittest.TestCase):
         command_index_map = CommandIndexMap()
         parent_map = ParentMap()
         token_action_map = TokenActionMap()
-        navigate(template, GenerateParserVisitor(field_names, command_index_map, parent_map, token_action_map))
+        positional_action_map = PositionalActionMap()
+        navigate(template, GenerateParserVisitor(field_names, command_index_map,
+            parent_map, token_action_map, positional_action_map))
 
         gf = GenFile()
         self.assertTrue("--common-option" in token_action_map)
