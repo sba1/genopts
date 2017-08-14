@@ -629,7 +629,7 @@ class GenerateParserVisitor(Visitor):
             Filled by this functions. Corresponds to a map from commands or
             options to commands.
         token_action_map:
-            Filled by this visitor. Will hole all relevant tokens with their
+            Filled by this visitor. Will hold all relevant tokens with their
             action.
         """
         self.field_names = field_names
