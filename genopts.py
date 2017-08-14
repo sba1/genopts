@@ -748,7 +748,7 @@ class GenerateParserVisitor(Visitor):
             self.field_names[num_field_name] = "int"
             self.positional_action_map.add(self.cur_position, "cli->{0} = &argv[i];".format(field_name))
             self.positional_action_map.add(self.cur_position, "cli->{0} = argc - i;".format(num_field_name))
-            self.positional_action_map.add(self.cur_position, "cur_position = -1;")
+            self.positional_action_map.add(self.cur_position, "break;")
         else:
             self.field_names[field_name] = "char *"
             self.positional_action_map.add(self.cur_position, "cli->{0} = argv[i];".format(field_name))
