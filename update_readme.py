@@ -7,6 +7,7 @@
 # The actual output file that is generated is called ReadMe.md.new
 
 import re
+import sys
 
 with open('ReadMe.md', 'r') as f:
     readme = f.read()
