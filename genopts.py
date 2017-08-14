@@ -685,6 +685,9 @@ class GenerateParserVisitor(Visitor):
         # initialized
         self.cur_command = None # type: Command
 
+        # Number of current positional argument
+        self.cur_position = 0
+
     def remember_pos(self, token, field_name):
         # type: (str, str) -> None
         cur_command_name = field_name + "_cmd"
@@ -743,13 +746,14 @@ class GenerateParserVisitor(Visitor):
             num_field_name = field_name + "_num";
             self.field_names[field_name] = "char **"
             self.field_names[num_field_name] = "int"
-            self.positional_action_map.add(0, "cli->{0} = &argv[i];".format(field_name))
-            self.positional_action_map.add(0, "cli->{0} = argc - i + 1;".format(num_field_name))
-            self.positional_action_map.add(0, "cur_position = -1;")
+            self.positional_action_map.add(self.cur_position, "cli->{0} = &argv[i];".format(field_name))
+            self.positional_action_map.add(self.cur_position, "cli->{0} = argc - i + 1;".format(num_field_name))
+            self.positional_action_map.add(self.cur_position, "cur_position = -1;")
         else:
             self.field_names[field_name] = "char *"
-            self.positional_action_map.add(0, "cli->{0} = argv[i];".format(field_name))
-            self.positional_action_map.add(0, "cur_position++;")
+            self.positional_action_map.add(self.cur_position, "cli->{0} = argv[i];".format(field_name))
+            self.positional_action_map.add(self.cur_position, "cur_position++;")
+            self.cur_position = self.cur_position + 1
 
 def genopts(patterns):
     # type: (List[str])->None
