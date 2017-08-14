@@ -66,6 +66,7 @@ class TestParser(unittest.TestCase):
         self.assertTrue(isinstance(parse_tree, Pattern))
 
     def test_parse_varargs(self):
+        # type: () -> None
         rem, optional = parse_optional("[<pathspec>...]")
         self.assertIsNotNone(optional)
         self.assertIsNotNone(optional)
@@ -73,7 +74,10 @@ class TestParser(unittest.TestCase):
         self.assertEquals(1, len(optional.list))
         self.assertTrue(isinstance(optional.list[0], Arg))
         self.assertEquals("pathspec", optional.list[0].command)
-        self.assertTrue(optional.list[0].varargs)
+        if isinstance(optional.list[0], Arg):
+            # Work-arround for mypy not being able to type-infer former
+            # self.assertTrue(isinstance())
+            self.assertTrue(optional.list[0].variadic)
 
     def test_parse_two_patterns(self):
         # type: () -> None
