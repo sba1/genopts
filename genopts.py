@@ -42,14 +42,14 @@ class Command:
 
 class Arg:
     """Contains an argument"""
-    def __init__(self, name, varargs=False):
+    def __init__(self, name, variadic=False):
         # type: (str, bool) -> None
         self.command = name
-        self.varargs = varargs
+        self.variadic = variadic
 
     def __repr__(self):
         # type: () -> str
-        return "Arg(" + self.command + ", varargs=" + str(self.varargs) + ")"
+        return "Arg(" + self.command + ", variadic=" + str(self.variadic) + ")"
 
 class OptionWithArg:
     """Contains an option with args"""
