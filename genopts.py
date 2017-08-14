@@ -739,9 +739,17 @@ class GenerateParserVisitor(Visitor):
     def visit_arg(self, n):
         # type: (Arg) -> None
         field_name = makecname(n.command)
-        self.field_names[field_name] = "char *"
-        self.positional_action_map.add(0, "cli->{0} = argv[i];".format(field_name))
-        self.positional_action_map.add(0, "cur_position++;")
+        if n.variadic:
+            num_field_name = field_name + "_num";
+            self.field_names[field_name] = "char **"
+            self.field_names[num_field_name] = "int"
+            self.positional_action_map.add(0, "cli->{0} = &argv[i];".format(field_name))
+            self.positional_action_map.add(0, "cli->{0} = argc - i + 1;".format(num_field_name))
+            self.positional_action_map.add(0, "cur_position = -1;")
+        else:
+            self.field_names[field_name] = "char *"
+            self.positional_action_map.add(0, "cli->{0} = argv[i];".format(field_name))
+            self.positional_action_map.add(0, "cur_position++;")
 
 def genopts(patterns):
     # type: (List[str])->None
