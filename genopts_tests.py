@@ -79,6 +79,18 @@ class TestParser(unittest.TestCase):
             # self.assertTrue(isinstance())
             self.assertTrue(optional.list[0].variadic)
 
+    def test_parse_pattern_with_arg(self):
+        # type: () -> None
+        parse_tree = parse_pattern("add <file>")
+        self.assertIsNotNone(parse_tree)
+        self.assertEquals(1, len(parse_tree.list))
+        self.assertEquals(1, len(parse_tree.list[0].options))
+        opts = parse_tree.list[0].options
+        self.assertTrue(isinstance(opts[0], Arg))
+        if isinstance(opts[0], Arg):
+            self.assertEquals("file", opts[0].command)
+            self.assertFalse(opts[0].variadic)
+
     def test_parse_two_patterns(self):
         # type: () -> None
         parse_tree = []

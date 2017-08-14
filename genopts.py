@@ -28,7 +28,7 @@ class Command:
     and an optional subcommand.
     """
     def __init__(self, command, options, subcommand):
-        # type: (str, List[Optional], Command)->None
+        # type: (str, List[Union[Optional, Arg]], Command)->None
         self.command = command
         self.options = options
         self.subcommand = subcommand
@@ -133,7 +133,7 @@ def parse_command(command):
     if rem is None:
         return None, None
 
-    options = [] # type: List[Optional]
+    options = [] # type: List[Union[Optional, Arg]]
     subcommand = None # type: Command
 
     while rem is not None and len(rem) != 0:
@@ -141,17 +141,25 @@ def parse_command(command):
         if rem is None:
             break
 
-        # Try command first
-        new_rem, subcommand = parse_command(rem)
+        # Try arg first
+        new_rem, arg = parse_arg(rem)
         if new_rem is not None:
-            rem = new_rem
-            #rem = ""
-            break
+            options.append(Arg(arg))
+
+        if new_rem is None:
+            # Try command next
+            new_rem, subcommand = parse_command(rem)
+            if new_rem is not None:
+                rem = new_rem
+                #rem = ""
+                break
 
         # Then optional
-        new_rem, optional = parse_optional(rem)
-        if new_rem is not None:
-            options.append(optional)
+        if new_rem is None:
+            new_rem, optional = parse_optional(rem)
+            if new_rem is not None:
+                options.append(optional)
+
         rem = new_rem
 
     return rem, Command(command_tk, options, subcommand)
