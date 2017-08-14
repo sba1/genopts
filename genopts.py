@@ -597,10 +597,11 @@ class TokenActionMap:
         first = True
         for token in sorted_tokens:
             if first:
-                gf.writeline('if (!strcmp("{0}", argv[i]))'.format(token))
+                el = ''
                 first = False
             else:
-                gf.writeline('else if (!strcmp("{0}", argv[i]))'.format(token))
+                el = 'else '
+            gf.writeline('{0}if (!strcmp("{1}", argv[i]))'.format(el, token))
 
             gf.writeline("{")
             for a in self.token_action_map[token]:
