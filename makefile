@@ -35,7 +35,16 @@ clean:
 	rm -f test_cli.c
 	rm -f test
 
-ReadMe.md: sync.genopts genopts.py update_readme.py
+sync_cli.c: sync.genopts genopts.py
 	cat sync.genopts | ./genopts.py >sync_cli.c
+
+ReadMe.md.new: ReadMe.md sync_cli.c update_readme.py
 	./update_readme.py
+
+ReadMe.md: ReadMe.md.new
 	cp ReadMe.md.new ReadMe.md
+
+# Target whether to check whether ReadMe.md is current
+.PHONY: readme-check
+readme-check: ReadMe.md.new
+	cmp ReadMe.md ReadMe.md.new
