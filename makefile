@@ -34,3 +34,7 @@ clean:
 	rm -f $(TEST_GENOPTS)
 	rm -f test_cli.c
 	rm -f test
+
+ReadMe.md: sync.genopts genopts.py update_readme.py
+	cat sync.genopts | ./genopts.py >sync_cli.c
+	./update_readme.py
