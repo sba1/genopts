@@ -38,3 +38,4 @@ clean:
 ReadMe.md: sync.genopts genopts.py update_readme.py
 	cat sync.genopts | ./genopts.py >sync_cli.c
 	./update_readme.py
+	cp ReadMe.md.new ReadMe.md
