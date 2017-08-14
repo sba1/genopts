@@ -6,3 +6,4 @@ install:
 script:
  - make type-check
  - make check
+ - make readme-check
