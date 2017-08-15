@@ -43,13 +43,15 @@ struct cli
 	int fast;
 	int fast_cmd;
 	char **files;
-	int files_num;
+	int files_count;
 	int help;
 	int help_cmd;
 	int n;
 	int n_cmd;
 	int sync;
 	int sync_pos;
+	int variadic_argc;
+	char **variadic_argv;
 };
 
 static int parse_cli(int argc, char *argv[], struct cli *cli)
@@ -85,10 +87,10 @@ static int parse_cli(int argc, char *argv[], struct cli *cli)
 			cli->sync_pos = i;
 			cur_command = 2;
 		}
-		else if (cur_position == 0)
+		else if (cur_position == 0 && cur_command == 2)
 		{
-			cli->files = &argv[i];
-			cli->files_num = argc - i;
+			cli->variadic_argv = &argv[i];
+			cli->variadic_argc = argc - i;
 			break;
 		}
 		else
@@ -129,6 +131,8 @@ static int validate_cli(struct cli *cli)
 	}
 	if (cli->sync)
 	{
+		cli->files_count = cli->variadic_argc;
+		cli->files = cli->variadic_argv;
 	}
 	else
 	{
