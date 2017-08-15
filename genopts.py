@@ -762,20 +762,20 @@ class GenerateParserVisitor(Visitor):
         field_name = makecname(n.command)
         cur_command_idx = self.command_index_map.map(self.cur_command)
         if n.variadic:
-            num_field_name = field_name + "_num";
+            count_field_name = field_name + "_count";
 
             self.field_names[field_name] = "char **"
-            self.field_names[num_field_name] = "int"
+            self.field_names[count_field_name] = "int"
 
             # Use helper fields, the real one will be set in the validation phase
             variadic_field_name = 'variadic_argv'
-            variadic_num_field_name = 'variadic_argc'
+            variadic_count_field_name = 'variadic_argc'
 
             self.field_names[variadic_field_name] = "char **"
-            self.field_names[variadic_num_field_name] = "int"
+            self.field_names[variadic_count_field_name] = "int"
 
             self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = &argv[i];".format(variadic_field_name))
-            self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = argc - i;".format(variadic_num_field_name))
+            self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = argc - i;".format(variadic_count_field_name))
             self.positional_action_map.add(self.cur_position, cur_command_idx, "break;")
         else:
             self.field_names[field_name] = "char *"
@@ -880,7 +880,7 @@ def genopts(patterns):
         #  positional ones. This is not yet reflected in this code.
         for pos, arg in enumerate(commands[1]):
             if arg.variadic:
-                gf.writeline("cli->{0}_num = cli->variadic_argc;".format(makecname(arg.command)))
+                gf.writeline("cli->{0}_count = cli->variadic_argc;".format(makecname(arg.command)))
                 gf.writeline("cli->{0} = cli->variadic_argv;".format(makecname(arg.command)))
             else:
                 gf.writeline("cli->{0} = cli->positional{1};".format(makecname(arg.command), pos))
