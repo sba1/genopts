@@ -666,21 +666,47 @@ class PositionalActionMap:
                     gf.writeline(a)
                 gf.writeline("}")
 
+class Variable:
+    def __init__(self, name, vtype):
+        # type: (str, str) -> None
+        self.name = name
+        self.vtype = vtype
+
+class Variables:
+    """An abstraction of run time variabels needed during parsing."""
+    def __init__(self):
+        # type: () -> None
+        self.variables = dict() # type: Dict[str, Variable]
+
+    def add(self, name, vtype):
+        # type: (str, str) -> None
+        self.variables[name] = Variable(name, vtype)
+
+class GeneratorContext:
+    """
+    The context of the parser generator
+    """
+    def __init__(self):
+        # type: () -> None
+        self.cli_vars = Variables()
+
+    def add_cli_var(self, name, vtype):
+	# type: (str, str) -> None
+        self.cli_vars.add(name, vtype)
+
 class GenerateParserVisitor(Visitor):
     """
     Vistor that generates the parsing of the command line arguments
     """
-    def __init__(self, field_names, command_index_map, parent_map, token_action_map, positional_action_map):
-        # type: (Dict[str,str], CommandIndexMap, ParentMap, TokenActionMap, PositionalActionMap) -> None
+    def __init__(self, context, command_index_map, parent_map, token_action_map, positional_action_map):
+        # type: (GeneratorContext, CommandIndexMap, ParentMap, TokenActionMap, PositionalActionMap) -> None
         """
         Constructs the visitor.
 
         Parameters
         ----------
-        field_names:
-            A dictionary in which all required field names of the struct
-            are stored including their type. This will be modified by the
-            visitor.
+        context:
+            The overall generator context that is setup by this visitor.
         command_index_map:
             Filled by this function. Associates an integer index with a command.
         parent_map:
@@ -692,7 +718,7 @@ class GenerateParserVisitor(Visitor):
         positional_action_map:
             Filled by this visitor. Will hold all revelant positional actions.
         """
-        self.field_names = field_names
+        self.context = context
         self.command_index_map = command_index_map
         self.parent_map = parent_map
         self.token_action_map = token_action_map
@@ -709,7 +735,7 @@ class GenerateParserVisitor(Visitor):
     def remember_pos(self, token, field_name):
         # type: (str, str) -> None
         cur_command_name = field_name + "_cmd"
-        self.field_names[cur_command_name] = "int"
+        self.context.add_cli_var(cur_command_name, "int")
         self.token_action_map.add(token, "cli->{0} = cur_command;".format(cur_command_name))
 
     def visit_command(self, n):
@@ -719,8 +745,8 @@ class GenerateParserVisitor(Visitor):
         field_name = makename(n)
         pos_name = field_name + "_pos"
 
-        self.field_names[field_name] = "int"
-        self.field_names[pos_name] = "int"
+        self.context.add_cli_var(field_name, "int")
+        self.context.add_cli_var(pos_name, "int")
 
         # Remember parent
         self.parent_map.add_command(n, self.cur_command)
@@ -746,10 +772,10 @@ class GenerateParserVisitor(Visitor):
         if option not in self.token_action_map:
             field_name = makename(n)
             if n.arg == None:
-                self.field_names[field_name] = "int"
+                self.context.add_cli_var(field_name, "int")
                 self.token_action_map.add(option, "cli->{0} = 1;".format(field_name))
             else:
-                self.field_names[field_name] = "char *"
+                self.context.add_cli_var(field_name, "char *")
                 field_name = makename(n)
 
                 self.token_action_map.add(option, "if (++i == argc) break;")
@@ -764,25 +790,25 @@ class GenerateParserVisitor(Visitor):
         if n.variadic:
             count_field_name = field_name + "_count";
 
-            self.field_names[field_name] = "char **"
-            self.field_names[count_field_name] = "int"
+            self.context.add_cli_var(field_name, "char **")
+            self.context.add_cli_var(count_field_name, "int")
 
             # Use helper fields, the real one will be set in the validation phase
             variadic_field_name = 'variadic_argv'
             variadic_count_field_name = 'variadic_argc'
 
-            self.field_names[variadic_field_name] = "char **"
-            self.field_names[variadic_count_field_name] = "int"
+            self.context.add_cli_var(variadic_field_name, "char **")
+            self.context.add_cli_var(variadic_count_field_name, "int")
 
             self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = &argv[i];".format(variadic_field_name))
             self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = argc - i;".format(variadic_count_field_name))
             self.positional_action_map.add(self.cur_position, cur_command_idx, "break;")
         else:
-            self.field_names[field_name] = "char *"
+            self.context.add_cli_var(field_name, "char *")
 
             # Use helper fields, the real one will be set in the validation phase
             positional_field_name = 'positional{0}'.format(self.cur_position)
-            self.field_names[positional_field_name] = "char *"
+            self.context.add_cli_var(positional_field_name, "char *")
 
             self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = argv[i];".format(positional_field_name))
             self.positional_action_map.add(self.cur_position, cur_command_idx, "cur_position++;")
@@ -804,27 +830,27 @@ def genopts(patterns):
     gf.writeline("#include <stdio.h>")
     gf.writeline("#include <string.h>")
 
-    field_names = dict() # type: Dict[str,str]
+    context = GeneratorContext()
     parent_map = ParentMap()
     command_index_map = CommandIndexMap()
     token_action_map = TokenActionMap()
     positional_action_map = PositionalActionMap()
-    navigate(template, GenerateParserVisitor(field_names, command_index_map, 
+    navigate(template, GenerateParserVisitor(context, command_index_map,
         parent_map, token_action_map, positional_action_map))
 
     if "--help" not in token_action_map:
-        field_names["help"] = "int"
-        field_names["help_cmd"] = "int"
+        context.add_cli_var("help", "int")
+        context.add_cli_var("help_cmd", "int")
         token_action_map.add("--help", "cli->help = 1;")
         token_action_map.add("--help", "cli->help_cmd = cur_command;")
 
-    sorted_field_names = sorted([k for k in field_names])
+    sorted_field_names = sorted([k for k in context.cli_vars.variables])
 
     gf.writeline()
     gf.writeline("struct cli")
     gf.writeline("{")
     for k in sorted_field_names:
-        t = field_names[k]
+        t = context.cli_vars.variables[k].vtype
         space = ' '
         if t.endswith('*'):
             space = ''

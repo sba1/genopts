@@ -98,12 +98,12 @@ class TestParser(unittest.TestCase):
         parse_tree.append(parse_pattern("[--common-option] cmd2 [--same] [--cmd2-option]"))
         template = Template(parse_tree)
         gf = GenFile(f=open("/dev/zero","w"))
-        field_names = dict() # type: Dict[str, str]
+        context = GeneratorContext()
         command_index_map = CommandIndexMap()
         parent_map = ParentMap()
         token_action_map = TokenActionMap()
         positional_action_map = PositionalActionMap()
-        navigate(template, GenerateParserVisitor(field_names, command_index_map,
+        navigate(template, GenerateParserVisitor(context, command_index_map,
             parent_map, token_action_map, positional_action_map))
 
         gf = GenFile()
