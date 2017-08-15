@@ -479,14 +479,14 @@ def write_command_validation(gf, command_index_map, parent_map, option_with_args
 
 class CommandListExtractorVisitor(Visitor):
     def __init__(self, gf, all_commands):
-        # type: (GenFile, List[List[Command]]) -> None
+        # type: (GenFile, List[Tuple[List[Command],List[Arg]]]) -> None
         self.gf = gf
-        self.all_commands = all_commands # type: List[List[Command]]
-        self.commands = [] # type: List[Command]
+        self.all_commands = all_commands # type: List[Tuple[List[Command], List[Arg]]]
+        self.commands = ([],[]) # type: Tuple[List[Command],List[Arg]]
 
     def enter_pattern(self, n):
         # type: (Pattern) -> None
-        self.commands = [] # type: List[Command]
+        self.commands = ([],[]) # type: Tuple[List[Command],List[Arg]]
 
     def leave_pattern(self, n):
         # type: (Pattern) -> None
@@ -494,7 +494,11 @@ class CommandListExtractorVisitor(Visitor):
 
     def visit_command(self, n):
         # type: (Command) -> None
-        self.commands.append(n)
+        self.commands[0].append(n)
+
+    def visit_arg(self, n):
+        # type: (Arg) -> None
+        self.commands[1].append(n)
 
 ################################################################################
 
@@ -622,39 +626,42 @@ class PositionalActionMap:
     """
     def __init__(self):
         # type: () -> None
-        self.action_map = [] # type: List[List[str]]
+        self.action_map = [] # type: List[Dict[int,List[str]]]
         self.last_is_variadic = False
 
-    def add(self, pos, action, variadic=False):
-        # type: (int, str, bool) -> None
+    def add(self, pos, cmd_idx, action, variadic=False):
+        # type: (int, int, str, bool) -> None
         if self.last_is_variadic:
             raise RuntimeError("""
                 Adding another positional argument after a variadic one is not supported!
                 """)
         if len(self.action_map) == pos:
-            self.action_map.append([])
+            self.action_map.append(dict())
         elif len(self.action_map) < pos:
             raise RuntimeError("""
                 Positional arguments must be added consecutively.
                 """)
 
-        self.action_map[pos].append(action)
+        if cmd_idx not in self.action_map[pos]:
+            self.action_map[pos][cmd_idx] = []
+        self.action_map[pos][cmd_idx].append(action)
         self.last_is_variadic = variadic
 
     def write(self, gf, first=False):
         # type: (GenFile, bool) -> None
-        for i, actions in enumerate(self.action_map):
-            if first:
-                el = ''
-                first = False
-            else:
-                el = 'else '
-            gf.writeline('{0}if (cur_position == {1})'.format(el, i))
+        for pos, cmd_maps in enumerate(self.action_map):
+            for cmd_idx in cmd_maps:
+                if first:
+                    el = ''
+                    first = False
+                else:
+                    el = 'else '
+                gf.writeline('{0}if (cur_position == {1} && cur_command == {2})'.format(el, pos, cmd_idx))
 
-            gf.writeline("{")
-            for a in actions:
-                gf.writeline(a)
-            gf.writeline("}")
+                gf.writeline("{")
+                for a in cmd_maps[cmd_idx]:
+                    gf.writeline(a)
+                gf.writeline("}")
 
 class GenerateParserVisitor(Visitor):
     """
@@ -750,18 +757,38 @@ class GenerateParserVisitor(Visitor):
     def visit_arg(self, n):
         # type: (Arg) -> None
         field_name = makecname(n.command)
+        cur_command_idx = self.command_index_map.map(self.cur_command)
         if n.variadic:
             num_field_name = field_name + "_num";
+
             self.field_names[field_name] = "char **"
             self.field_names[num_field_name] = "int"
-            self.positional_action_map.add(self.cur_position, "cli->{0} = &argv[i];".format(field_name))
-            self.positional_action_map.add(self.cur_position, "cli->{0} = argc - i;".format(num_field_name))
-            self.positional_action_map.add(self.cur_position, "break;")
+
+            # Use helper fields, the real one will be set in the validation phase
+            variadic_field_name = 'variadic_argv'
+            variadic_num_field_name = 'variadic_argc'
+
+            self.field_names[variadic_field_name] = "char **"
+            self.field_names[variadic_num_field_name] = "int"
+
+            self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = &argv[i];".format(variadic_field_name))
+            self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = argc - i;".format(variadic_num_field_name))
+            self.positional_action_map.add(self.cur_position, cur_command_idx, "break;")
         else:
             self.field_names[field_name] = "char *"
-            self.positional_action_map.add(self.cur_position, "cli->{0} = argv[i];".format(field_name))
-            self.positional_action_map.add(self.cur_position, "cur_position++;")
+
+            # Use helper fields, the real one will be set in the validation phase
+            positional_field_name = 'positional{0}'.format(self.cur_position)
+            self.field_names[positional_field_name] = "char *"
+
+            self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = argv[i];".format(positional_field_name))
+            self.positional_action_map.add(self.cur_position, cur_command_idx, "cur_position++;")
+
             self.cur_position = self.cur_position + 1
+
+    def leave_pattern(self, n):
+        # type: (Pattern) -> None
+        self.cur_position = 0
 
 def genopts(patterns):
     # type: (List[str])->None
@@ -826,7 +853,7 @@ def genopts(patterns):
     gf.writeline()
 
     option_with_args = [] # type: List[OptionWithArg]
-    all_commands = [] # type: List[List[Command]]
+    all_commands = [] # type: List[Tuple[List[Command], List[Arg]]]
     navigate(template, OptionWithArgExtractorVisitor(True, option_with_args))
     navigate(template, CommandListExtractorVisitor(gf, all_commands))
 
@@ -840,10 +867,22 @@ def genopts(patterns):
     first = True
     for commands in all_commands:
         conds = [] # type: List[str]
-        for command in commands:
+        for command in commands[0]:
             conds.append("cli->{0}".format(makename(command)))
         gf.writeline("{0} ({1})".format("if" if first else "else if", " && ".join(conds)))
         gf.writeline("{")
+
+        # Resolve positional arguments
+        # FIXME: There may be optional positional args before mandatory
+        #  positional ones. This is not yet reflected in this code.
+        for pos, arg in enumerate(commands[1]):
+            if arg.variadic:
+                gf.writeline("cli->{0}_num = cli->variadic_argc;".format(makecname(arg.command)))
+                gf.writeline("cli->{0} = cli->variadic_argv;".format(makecname(arg.command)))
+            else:
+                gf.writeline("cli->{0} = cli->positional{1};".format(makecname(arg.command), pos))
+            makecname(arg.command)
+
         gf.writeline("}")
         first = False
     if not first:
