@@ -195,6 +195,9 @@ def parse_command_with_arg(command_with_arg):
 
 def combine(first,second):
     # type: (List[str],List[str])->List[str]
+    """
+    Combine/Concatenate each element from first with each element of second.
+    """
     r = [] # type: List[str]
     for a in first:
         for b in second:
