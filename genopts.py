@@ -689,6 +689,10 @@ class GeneratorContext:
     def __init__(self):
         # type: () -> None
         self.cli_vars = Variables()
+        self.parent_map = ParentMap()
+        self.command_index_map = CommandIndexMap()
+        self.token_action_map = TokenActionMap()
+        self.positional_action_map = PositionalActionMap()
 
     def add_cli_var(self, name, vtype):
 	# type: (str, str) -> None
@@ -698,8 +702,8 @@ class GenerateParserVisitor(Visitor):
     """
     Vistor that generates the parsing of the command line arguments
     """
-    def __init__(self, context, command_index_map, parent_map, token_action_map, positional_action_map):
-        # type: (GeneratorContext, CommandIndexMap, ParentMap, TokenActionMap, PositionalActionMap) -> None
+    def __init__(self, context):
+        # type: (GeneratorContext) -> None
         """
         Constructs the visitor.
 
@@ -707,22 +711,12 @@ class GenerateParserVisitor(Visitor):
         ----------
         context:
             The overall generator context that is setup by this visitor.
-        command_index_map:
-            Filled by this function. Associates an integer index with a command.
-        parent_map:
-            Filled by this functions. Corresponds to a map from commands or
-            options to commands.
-        token_action_map:
-            Filled by this visitor. Will hold all relevant tokens with their
-            action.
-        positional_action_map:
-            Filled by this visitor. Will hold all revelant positional actions.
         """
         self.context = context
-        self.command_index_map = command_index_map
-        self.parent_map = parent_map
-        self.token_action_map = token_action_map
-        self.positional_action_map = positional_action_map
+        self.command_index_map = context.command_index_map
+        self.parent_map = context.parent_map
+        self.token_action_map = context.token_action_map
+        self.positional_action_map = context.positional_action_map
         self.first = True
 
         # Start with 1 in case there options without commands and 0 means not
@@ -831,18 +825,13 @@ def genopts(patterns):
     gf.writeline("#include <string.h>")
 
     context = GeneratorContext()
-    parent_map = ParentMap()
-    command_index_map = CommandIndexMap()
-    token_action_map = TokenActionMap()
-    positional_action_map = PositionalActionMap()
-    navigate(template, GenerateParserVisitor(context, command_index_map,
-        parent_map, token_action_map, positional_action_map))
+    navigate(template, GenerateParserVisitor(context))
 
-    if "--help" not in token_action_map:
+    if "--help" not in context.token_action_map:
         context.add_cli_var("help", "int")
         context.add_cli_var("help_cmd", "int")
-        token_action_map.add("--help", "cli->help = 1;")
-        token_action_map.add("--help", "cli->help_cmd = cur_command;")
+        context.token_action_map.add("--help", "cli->help = 1;")
+        context.token_action_map.add("--help", "cli->help_cmd = cur_command;")
 
     sorted_field_names = sorted([k for k in context.cli_vars.variables])
 
@@ -868,8 +857,8 @@ def genopts(patterns):
     gf.writeline("for (i=0; i < argc; i++)")
     gf.writeline("{")
 
-    token_action_map.write(gf)
-    positional_action_map.write(gf)
+    context.token_action_map.write(gf)
+    context.positional_action_map.write(gf)
 
     gf.writeline("else")
     gf.writeline("{")
@@ -889,7 +878,7 @@ def genopts(patterns):
     # Generates the validation function
     gf.writeline("static int validate_cli(struct cli *cli)")
     gf.writeline("{")
-    write_command_validation(gf, command_index_map, parent_map, option_with_args)
+    write_command_validation(gf, context.command_index_map, context.parent_map, option_with_args)
     navigate(template, GenerateMXValidatorVisitor(gf))
 
     # Proper commands specified
