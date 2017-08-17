@@ -6,7 +6,6 @@
 #
 
 # TODO: Add possibility to express that e.g., -m can appear multiple times (e.g., use asteriks)
-# TODO: Accept generic string <> (not only in args)
 # TODO: Completion support
 # TODO: Types
 # TODO: There is no real difference beteen [] that contains options and those that can
