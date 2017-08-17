@@ -425,7 +425,7 @@ class GenerateMXValidatorVisitor(Visitor):
         opts = [cmd.command for cmd in self.cmds]
         self.gf.writeline("if (count > 1)")
         self.gf.writeline("{")
-        self.gf.writeline("fprintf(stderr, \"Only one of {0} may be given\\n\");".format(", ".join(opts)))
+        self.gf.writeline("fprintf(stderr, \"Only one of {0} may be given\\n\");".format(join_enum(opts, "or")))
         self.gf.writeline("return 0;")
         self.gf.writeline("}")
         self.gf.writeline("}")
