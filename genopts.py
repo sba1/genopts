@@ -453,6 +453,17 @@ class OptionWithArgExtractorVisitor(Visitor):
 
 ################################################################################
 
+def join_enum(list, conjunction):
+    # type: (List[str], str) -> str
+    """Joins the given list of strings with a conjunction."""
+    if len(list) == 1:
+        return list[0]
+
+    if len(list) == 2:
+        return list[0] + " " + conjunction + " " + list[1]
+
+    return ", ".join(list[:-1]) + ", " + conjunction + " " + list[-1]
+
 def write_command_validation(gf, command_index_map, parent_map, option_with_args):
     # type: (GenFile, CommandIndexMap, ParentMap, List[OptionWithArg]) -> None
     for n in option_with_args:
@@ -465,11 +476,7 @@ def write_command_validation(gf, command_index_map, parent_map, option_with_args
         # Make list of conditions
         conds = ["cli->{0} != {1}".format(cur_command_name, pi) for pi in set(parent_indices)]
         valid_commands = ['\\"' + vc + '\\"' for vc in parent_names]
-        if len(valid_commands) == 2:
-            valid_commands_text = valid_commands[0] + " and " + valid_commands[1]
-        else:
-            valid_commands_text = ", ".join(valid_commands)
-        valid_commands_text = valid_commands_text + " command"
+        valid_commands_text = join_enum(valid_commands, "and") + " command"
 
         gf.writeline("if (cli->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
         gf.writeline("{")
