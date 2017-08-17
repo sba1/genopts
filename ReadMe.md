@@ -125,7 +125,7 @@ static int validate_cli(struct cli *cli)
 		count += !!cli->dry_run;
 		if (count > 1)
 		{
-			fprintf(stderr, "Only one of -n, --dry-run may be given\n");
+			fprintf(stderr, "Only one of -n or --dry-run may be given\n");
 			return 0;
 		}
 	}
