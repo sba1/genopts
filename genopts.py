@@ -858,6 +858,12 @@ def genopts(patterns):
     write_struct(gf, context.cli_vars)
     gf.writeline()
 
+    gf.writeline("typedef enum")
+    gf.writeline("{")
+    gf.writeline("PF_VALIDATE = (1<<0)")
+    gf.writeline("} parse_cli_options_t;")
+    gf.writeline()
+
     option_with_args = [] # type: List[OptionWithArg]
     all_commands = [] # type: List[Tuple[List[Command], List[Arg]]]
     navigate(template, OptionWithArgExtractorVisitor(True, option_with_args))
@@ -921,7 +927,7 @@ def genopts(patterns):
     # Generate a function that parses the command line and populates
     # the struct cli. It does not yet make verification
     gf.writeline()
-    gf.writeline("static int parse_cli(int argc, char *argv[], struct cli *cli)")
+    gf.writeline("static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_t opts)")
     gf.writeline("{")
     gf.writeline("int i;")
     gf.writeline("int cur_command = -1;")
@@ -938,6 +944,11 @@ def genopts(patterns):
     gf.writeline("return 0;")
     gf.writeline("}")
     gf.writeline("}")
+    gf.writeline("if (opts & PF_VALIDATE)")
+    gf.writeline("{")
+    gf.writeline("return validate_cli(cli);")
+    gf.writeline("}")
+
     gf.writeline("return 1;")
     gf.writeline("}")
     gf.writeline()

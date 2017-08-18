@@ -54,6 +54,11 @@ struct cli
 	char **variadic_argv;
 };
 
+typedef enum
+{
+	PF_VALIDATE = (1<<0)
+} parse_cli_options_t;
+
 static int validate_cli(struct cli *cli)
 {
 	if (cli->fast_cmd != 0 && cli->fast_cmd != 2)
@@ -109,7 +114,7 @@ static int usage_cli(char *cmd, struct cli *cli)
 	return 1;
 }
 
-static int parse_cli(int argc, char *argv[], struct cli *cli)
+static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_t opts)
 {
 	int i;
 	int cur_command = -1;
@@ -153,6 +158,10 @@ static int parse_cli(int argc, char *argv[], struct cli *cli)
 			fprintf(stderr,"Unknown command or option \"%s\"\n", argv[i]);
 			return 0;
 		}
+	}
+	if (opts & PF_VALIDATE)
+	{
+		return validate_cli(cli);
 	}
 	return 1;
 }
