@@ -54,54 +54,6 @@ struct cli
 	char **variadic_argv;
 };
 
-static int parse_cli(int argc, char *argv[], struct cli *cli)
-{
-	int i;
-	int cur_command = -1;
-	int cur_position = 0;
-	for (i=0; i < argc; i++)
-	{
-		if (!strcmp("--dry-run", argv[i]))
-		{
-			cli->dry_run = 1;
-			cli->dry_run_cmd = cur_command;
-		}
-		else if (!strcmp("--fast", argv[i]))
-		{
-			cli->fast = 1;
-			cli->fast_cmd = cur_command;
-		}
-		else if (!strcmp("--help", argv[i]))
-		{
-			cli->help = 1;
-			cli->help_cmd = cur_command;
-		}
-		else if (!strcmp("-n", argv[i]))
-		{
-			cli->n = 1;
-			cli->n_cmd = cur_command;
-		}
-		else if (!strcmp("sync", argv[i]))
-		{
-			cli->sync = 1;
-			cli->sync_pos = i;
-			cur_command = 2;
-		}
-		else if (cur_position == 0 && cur_command == 2)
-		{
-			cli->variadic_argv = &argv[i];
-			cli->variadic_argc = argc - i;
-			break;
-		}
-		else
-		{
-			fprintf(stderr,"Unknown command or option \"%s\"\n", argv[i]);
-			return 0;
-		}
-	}
-	return 1;
-}
-
 static int validate_cli(struct cli *cli)
 {
 	if (cli->fast_cmd != 0 && cli->fast_cmd != 2)
@@ -156,4 +108,53 @@ static int usage_cli(char *cmd, struct cli *cli)
 	fprintf(stderr, "sync [--fast] [-n | --dry-run] [<files>...]\n");
 	return 1;
 }
+
+static int parse_cli(int argc, char *argv[], struct cli *cli)
+{
+	int i;
+	int cur_command = -1;
+	int cur_position = 0;
+	for (i=0; i < argc; i++)
+	{
+		if (!strcmp("--dry-run", argv[i]))
+		{
+			cli->dry_run = 1;
+			cli->dry_run_cmd = cur_command;
+		}
+		else if (!strcmp("--fast", argv[i]))
+		{
+			cli->fast = 1;
+			cli->fast_cmd = cur_command;
+		}
+		else if (!strcmp("--help", argv[i]))
+		{
+			cli->help = 1;
+			cli->help_cmd = cur_command;
+		}
+		else if (!strcmp("-n", argv[i]))
+		{
+			cli->n = 1;
+			cli->n_cmd = cur_command;
+		}
+		else if (!strcmp("sync", argv[i]))
+		{
+			cli->sync = 1;
+			cli->sync_pos = i;
+			cur_command = 2;
+		}
+		else if (cur_position == 0 && cur_command == 2)
+		{
+			cli->variadic_argv = &argv[i];
+			cli->variadic_argc = argc - i;
+			break;
+		}
+		else
+		{
+			fprintf(stderr,"Unknown command or option \"%s\"\n", argv[i]);
+			return 0;
+		}
+	}
+	return 1;
+}
+
 ```

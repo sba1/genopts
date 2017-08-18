@@ -844,6 +844,7 @@ def genopts(patterns):
 
     gf.writeline("#include <stdio.h>")
     gf.writeline("#include <string.h>")
+    gf.writeline()
 
     context = GeneratorContext()
     navigate(template, GenerateParserVisitor(context))
@@ -854,31 +855,7 @@ def genopts(patterns):
         context.token_action_map.add("--help", "cli->help = 1;")
         context.token_action_map.add("--help", "cli->help_cmd = cur_command;")
 
-    gf.writeline()
     write_struct(gf, context.cli_vars)
-
-    # Generate a function that parses the command line and populates
-    # the struct cli. It does not yet make verification
-    gf.writeline()
-    gf.writeline("static int parse_cli(int argc, char *argv[], struct cli *cli)")
-    gf.writeline("{")
-    gf.writeline("int i;")
-    gf.writeline("int cur_command = -1;")
-    gf.writeline("int cur_position = 0;")
-    gf.writeline("for (i=0; i < argc; i++)")
-    gf.writeline("{")
-
-    context.token_action_map.write(gf)
-    context.positional_action_map.write(gf)
-
-    gf.writeline("else")
-    gf.writeline("{")
-    gf.writeline('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
-    gf.writeline("return 0;")
-    gf.writeline("}")
-    gf.writeline("}")
-    gf.writeline("return 1;")
-    gf.writeline("}")
     gf.writeline()
 
     option_with_args = [] # type: List[OptionWithArg]
@@ -940,6 +917,30 @@ def genopts(patterns):
         gf.writeline('fprintf(stderr, "{0}\\n");'.format(pattern.strip()))
     gf.writeline("return 1;")
     gf.writeline("}")
+
+    # Generate a function that parses the command line and populates
+    # the struct cli. It does not yet make verification
+    gf.writeline()
+    gf.writeline("static int parse_cli(int argc, char *argv[], struct cli *cli)")
+    gf.writeline("{")
+    gf.writeline("int i;")
+    gf.writeline("int cur_command = -1;")
+    gf.writeline("int cur_position = 0;")
+    gf.writeline("for (i=0; i < argc; i++)")
+    gf.writeline("{")
+
+    context.token_action_map.write(gf)
+    context.positional_action_map.write(gf)
+
+    gf.writeline("else")
+    gf.writeline("{")
+    gf.writeline('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
+    gf.writeline("return 0;")
+    gf.writeline("}")
+    gf.writeline("}")
+    gf.writeline("return 1;")
+    gf.writeline("}")
+    gf.writeline()
 def main():
     # type: ()->None
     lines = sys.stdin.readlines()
