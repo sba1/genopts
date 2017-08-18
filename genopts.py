@@ -680,9 +680,10 @@ class Variable:
 
 class Variables:
     """An abstraction of run time variabels needed during parsing."""
-    def __init__(self):
-        # type: () -> None
+    def __init__(self, name):
+        # type: (str) -> None
         self.variables = dict() # type: Dict[str, Variable]
+        self.name = name
 
     def add(self, name, vtype):
         # type: (str, str) -> None
@@ -694,7 +695,7 @@ class GeneratorContext:
     """
     def __init__(self):
         # type: () -> None
-        self.cli_vars = Variables()
+        self.cli_vars = Variables("cli")
         self.parent_map = ParentMap()
         self.command_index_map = CommandIndexMap()
         self.token_action_map = TokenActionMap()
@@ -819,6 +820,20 @@ class GenerateParserVisitor(Visitor):
         # type: (Pattern) -> None
         self.cur_position = 0
 
+def write_struct(gf, variables):
+    # type: (GenFile, Variables) -> None
+    sorted_field_names = sorted([k for k in variables.variables])
+
+    gf.writeline("struct {0}".format(variables.name))
+    gf.writeline("{")
+    for k in sorted_field_names:
+        t = variables.variables[k].vtype
+        space = ' '
+        if t.endswith('*'):
+            space = ''
+        gf.writeline("{0}{1}{2};".format(t, space, k))
+    gf.writeline("};")
+
 def genopts(patterns):
     # type: (List[str])->None
     parse_trees = [parse_pattern(p.strip()) for p in patterns]
@@ -839,18 +854,8 @@ def genopts(patterns):
         context.token_action_map.add("--help", "cli->help = 1;")
         context.token_action_map.add("--help", "cli->help_cmd = cur_command;")
 
-    sorted_field_names = sorted([k for k in context.cli_vars.variables])
-
     gf.writeline()
-    gf.writeline("struct cli")
-    gf.writeline("{")
-    for k in sorted_field_names:
-        t = context.cli_vars.variables[k].vtype
-        space = ' '
-        if t.endswith('*'):
-            space = ''
-        gf.writeline("{0}{1}{2};".format(t, space, k))
-    gf.writeline("};")
+    write_struct(gf, context.cli_vars)
 
     # Generate a function that parses the command line and populates
     # the struct cli. It does not yet make verification
