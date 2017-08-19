@@ -860,7 +860,8 @@ def genopts(patterns):
 
     gf.writeline("typedef enum")
     gf.writeline("{")
-    gf.writeline("PF_VALIDATE = (1<<0)")
+    gf.writeline("POF_VALIDATE = (1<<0),")
+    gf.writeline("POF_USAGE = (1<<1)")
     gf.writeline("} parse_cli_options_t;")
     gf.writeline()
 
@@ -872,6 +873,10 @@ def genopts(patterns):
     # Generates the validation function
     gf.writeline("static int validate_cli(struct cli *cli)")
     gf.writeline("{")
+    gf.writeline("if (cli->help)")
+    gf.writeline("{")
+    gf.writeline("return 1;")
+    gf.writeline("}")
     write_command_validation(gf, context.command_index_map, context.parent_map, option_with_args)
     navigate(template, GenerateMXValidatorVisitor(gf))
 
@@ -932,6 +937,9 @@ def genopts(patterns):
     gf.writeline("int i;")
     gf.writeline("int cur_command = -1;")
     gf.writeline("int cur_position = 0;")
+    gf.writeline("char *cmd = argv[0];")
+    gf.writeline("argc--;")
+    gf.writeline("argv++;")
     gf.writeline("for (i=0; i < argc; i++)")
     gf.writeline("{")
 
@@ -944,11 +952,17 @@ def genopts(patterns):
     gf.writeline("return 0;")
     gf.writeline("}")
     gf.writeline("}")
-    gf.writeline("if (opts & PF_VALIDATE)")
+    gf.writeline("if (opts & POF_VALIDATE)")
     gf.writeline("{")
-    gf.writeline("return validate_cli(cli);")
+    gf.writeline("if (!validate_cli(cli))")
+    gf.writeline("{")
+    gf.writeline("return 0;")
     gf.writeline("}")
-
+    gf.writeline("}")
+    gf.writeline("if (opts & POF_USAGE)")
+    gf.writeline("{")
+    gf.writeline("return !usage_cli(cmd, cli);")
+    gf.writeline("}")
     gf.writeline("return 1;")
     gf.writeline("}")
     gf.writeline()

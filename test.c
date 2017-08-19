@@ -4,10 +4,9 @@
 int main(int argc, char **argv)
 {
 	struct cli cli = {0};
-	if (!parse_cli(argc-1, argv+1, &cli, PF_VALIDATE))
+	if (!parse_cli(argc, argv, &cli, POF_VALIDATE|POF_USAGE))
 	{
-		return -1;
+		return cli.help?0:-1;
 	}
-	usage_cli(argv[0], &cli);
 	return 0;
 }

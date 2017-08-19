@@ -56,11 +56,16 @@ struct cli
 
 typedef enum
 {
-	PF_VALIDATE = (1<<0)
+	POF_VALIDATE = (1<<0),
+	POF_USAGE = (1<<1)
 } parse_cli_options_t;
 
 static int validate_cli(struct cli *cli)
 {
+	if (cli->help)
+	{
+		return 1;
+	}
 	if (cli->fast_cmd != 0 && cli->fast_cmd != 2)
 	{
 		fprintf(stderr,"Option --fast may be given only for the \"sync\" command\n");
@@ -119,6 +124,9 @@ static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_
 	int i;
 	int cur_command = -1;
 	int cur_position = 0;
+	char *cmd = argv[0];
+	argc--;
+	argv++;
 	for (i=0; i < argc; i++)
 	{
 		if (!strcmp("--dry-run", argv[i]))
@@ -159,9 +167,16 @@ static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_
 			return 0;
 		}
 	}
-	if (opts & PF_VALIDATE)
+	if (opts & POF_VALIDATE)
 	{
-		return validate_cli(cli);
+		if (!validate_cli(cli))
+		{
+			return 0;
+		}
+	}
+	if (opts & POF_USAGE)
+	{
+		return !usage_cli(cmd, cli);
 	}
 	return 1;
 }
