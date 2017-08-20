@@ -702,7 +702,7 @@ class GeneratorContext:
         self.positional_action_map = PositionalActionMap()
 
     def add_cli_var(self, name, vtype):
-	# type: (str, str) -> None
+        # type: (str, str) -> None
         self.cli_vars.add(name, vtype)
 
 class GenerateParserVisitor(Visitor):
