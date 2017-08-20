@@ -119,14 +119,11 @@ static int usage_cli(char *cmd, struct cli *cli)
 	return 1;
 }
 
-static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_t opts)
+static int parse_cli_simple(int argc, char *argv[], struct cli *cli)
 {
 	int i;
 	int cur_command = -1;
 	int cur_position = 0;
-	char *cmd = argv[0];
-	argc--;
-	argv++;
 	for (i=0; i < argc; i++)
 	{
 		if (!strcmp("--dry-run", argv[i]))
@@ -166,6 +163,18 @@ static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_
 			fprintf(stderr,"Unknown command or option \"%s\"\n", argv[i]);
 			return 0;
 		}
+	}
+	return 1;
+}
+
+static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_t opts)
+{
+	char *cmd = argv[0];
+	argc--;
+	argv++;
+	if (!parse_cli_simple(argc, argv, cli))
+	{
+		return 0;
 	}
 	if (opts & POF_VALIDATE)
 	{
