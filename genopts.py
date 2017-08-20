@@ -474,11 +474,11 @@ def write_command_validation(gf, command_index_map, parent_map, option_with_args
         parent_indices = [command_index_map.map(p) for p in parents]
 
         # Make list of conditions
-        conds = ["cli->{0} != {1}".format(cur_command_name, pi) for pi in set(parent_indices)]
+        conds = ["aux->{0} != {1}".format(cur_command_name, pi) for pi in set(parent_indices)]
         valid_commands = ['\\"' + vc + '\\"' for vc in parent_names]
         valid_commands_text = join_enum(valid_commands, "and") + " command"
 
-        gf.writeline("if (cli->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
+        gf.writeline("if (aux->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
         gf.writeline("{")
         gf.writeline("fprintf(stderr,\"Option {0} may be given only for the {1}\\n\");".format(n.command, valid_commands_text))
         gf.writeline("return 0;")
@@ -696,6 +696,7 @@ class GeneratorContext:
     def __init__(self):
         # type: () -> None
         self.cli_vars = Variables("cli")
+        self.aux_vars = Variables("cli_aux")
         self.parent_map = ParentMap()
         self.command_index_map = CommandIndexMap()
         self.token_action_map = TokenActionMap()
@@ -704,6 +705,10 @@ class GeneratorContext:
     def add_cli_var(self, name, vtype):
         # type: (str, str) -> None
         self.cli_vars.add(name, vtype)
+
+    def add_aux_var(self, name, vtype):
+        # type: (str, str) -> None
+        self.aux_vars.add(name, vtype)
 
 class GenerateParserVisitor(Visitor):
     """
@@ -736,8 +741,8 @@ class GenerateParserVisitor(Visitor):
     def remember_pos(self, token, field_name):
         # type: (str, str) -> None
         cur_command_name = field_name + "_cmd"
-        self.context.add_cli_var(cur_command_name, "int")
-        self.token_action_map.add(token, "cli->{0} = cur_command;".format(cur_command_name))
+        self.context.add_aux_var(cur_command_name, "int")
+        self.token_action_map.add(token, "aux->{0} = cur_command;".format(cur_command_name))
 
     def visit_command(self, n):
         # type: (Command) -> None
@@ -747,7 +752,7 @@ class GenerateParserVisitor(Visitor):
         pos_name = field_name + "_pos"
 
         self.context.add_cli_var(field_name, "int")
-        self.context.add_cli_var(pos_name, "int")
+        self.context.add_aux_var(pos_name, "int")
 
         # Remember parent
         self.parent_map.add_command(n, self.cur_command)
@@ -758,7 +763,7 @@ class GenerateParserVisitor(Visitor):
 
         if cmd not in self.token_action_map:
             self.token_action_map.add(cmd, "cli->{0} = 1;".format(field_name))
-            self.token_action_map.add(cmd, "cli->{0} = i;".format(pos_name))
+            self.token_action_map.add(cmd, "aux->{0} = i;".format(pos_name))
             self.token_action_map.add(cmd, "cur_command = {0};".format(cur_command_idx))
 
     def visit_option_with_arg(self, n):
@@ -798,20 +803,20 @@ class GenerateParserVisitor(Visitor):
             variadic_field_name = 'variadic_argv'
             variadic_count_field_name = 'variadic_argc'
 
-            self.context.add_cli_var(variadic_field_name, "char **")
-            self.context.add_cli_var(variadic_count_field_name, "int")
+            self.context.add_aux_var(variadic_field_name, "char **")
+            self.context.add_aux_var(variadic_count_field_name, "int")
 
-            self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = &argv[i];".format(variadic_field_name))
-            self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = argc - i;".format(variadic_count_field_name))
+            self.positional_action_map.add(self.cur_position, cur_command_idx, "aux->{0} = &argv[i];".format(variadic_field_name))
+            self.positional_action_map.add(self.cur_position, cur_command_idx, "aux->{0} = argc - i;".format(variadic_count_field_name))
             self.positional_action_map.add(self.cur_position, cur_command_idx, "break;")
         else:
             self.context.add_cli_var(field_name, "char *")
 
             # Use helper fields, the real one will be set in the validation phase
             positional_field_name = 'positional{0}'.format(self.cur_position)
-            self.context.add_cli_var(positional_field_name, "char *")
+            self.context.add_aux_var(positional_field_name, "char *")
 
-            self.positional_action_map.add(self.cur_position, cur_command_idx, "cli->{0} = argv[i];".format(positional_field_name))
+            self.positional_action_map.add(self.cur_position, cur_command_idx, "aux->{0} = argv[i];".format(positional_field_name))
             self.positional_action_map.add(self.cur_position, cur_command_idx, "cur_position++;")
 
             self.cur_position = self.cur_position + 1
@@ -851,11 +856,13 @@ def genopts(patterns):
 
     if "--help" not in context.token_action_map:
         context.add_cli_var("help", "int")
-        context.add_cli_var("help_cmd", "int")
+        context.add_aux_var("help_cmd", "int")
         context.token_action_map.add("--help", "cli->help = 1;")
-        context.token_action_map.add("--help", "cli->help_cmd = cur_command;")
+        context.token_action_map.add("--help", "aux->help_cmd = cur_command;")
 
     write_struct(gf, context.cli_vars)
+    gf.writeline()
+    write_struct(gf, context.aux_vars)
     gf.writeline()
 
     gf.writeline("typedef enum")
@@ -871,7 +878,7 @@ def genopts(patterns):
     navigate(template, CommandListExtractorVisitor(gf, all_commands))
 
     # Generates the validation function
-    gf.writeline("static int validate_cli(struct cli *cli)")
+    gf.writeline("static int validate_cli(struct cli *cli, struct cli_aux *aux)")
     gf.writeline("{")
     gf.writeline("if (cli->help)")
     gf.writeline("{")
@@ -894,10 +901,10 @@ def genopts(patterns):
         #  positional ones. This is not yet reflected in this code.
         for pos, arg in enumerate(commands[1]):
             if arg.variadic:
-                gf.writeline("cli->{0}_count = cli->variadic_argc;".format(makecname(arg.command)))
-                gf.writeline("cli->{0} = cli->variadic_argv;".format(makecname(arg.command)))
+                gf.writeline("cli->{0}_count = aux->variadic_argc;".format(makecname(arg.command)))
+                gf.writeline("cli->{0} = aux->variadic_argv;".format(makecname(arg.command)))
             else:
-                gf.writeline("cli->{0} = cli->positional{1};".format(makecname(arg.command), pos))
+                gf.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
             makecname(arg.command)
 
         gf.writeline("}")
@@ -932,7 +939,7 @@ def genopts(patterns):
     # Generate a function that parses the command line and populates
     # the struct cli. It does not yet make verification
     gf.writeline()
-    gf.writeline("static int parse_cli_simple(int argc, char *argv[], struct cli *cli)")
+    gf.writeline("static int parse_cli_simple(int argc, char *argv[], struct cli *cli, struct cli_aux *aux)")
     gf.writeline("{")
     gf.writeline("int i;")
     gf.writeline("int cur_command = -1;")
@@ -955,16 +962,18 @@ def genopts(patterns):
 
     gf.writeline("static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_t opts)")
     gf.writeline("{")
+    gf.writeline("struct cli_aux aux;")
     gf.writeline("char *cmd = argv[0];")
+    gf.writeline("memset(&aux, sizeof(aux), 0);")
     gf.writeline("argc--;")
     gf.writeline("argv++;")
-    gf.writeline("if (!parse_cli_simple(argc, argv, cli))")
+    gf.writeline("if (!parse_cli_simple(argc, argv, cli, &aux))")
     gf.writeline("{")
     gf.writeline("return 0;")
     gf.writeline("}")
     gf.writeline("if (opts & POF_VALIDATE)")
     gf.writeline("{")
-    gf.writeline("if (!validate_cli(cli))")
+    gf.writeline("if (!validate_cli(cli, &aux))")
     gf.writeline("{")
     gf.writeline("return 0;")
     gf.writeline("}")

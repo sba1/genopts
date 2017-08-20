@@ -39,16 +39,20 @@ You get something like this:
 struct cli
 {
 	int dry_run;
-	int dry_run_cmd;
 	int fast;
-	int fast_cmd;
 	char **files;
 	int files_count;
 	int help;
-	int help_cmd;
 	int n;
-	int n_cmd;
 	int sync;
+};
+
+struct cli_aux
+{
+	int dry_run_cmd;
+	int fast_cmd;
+	int help_cmd;
+	int n_cmd;
 	int sync_pos;
 	int variadic_argc;
 	char **variadic_argv;
@@ -60,23 +64,23 @@ typedef enum
 	POF_USAGE = (1<<1)
 } parse_cli_options_t;
 
-static int validate_cli(struct cli *cli)
+static int validate_cli(struct cli *cli, struct cli_aux *aux)
 {
 	if (cli->help)
 	{
 		return 1;
 	}
-	if (cli->fast_cmd != 0 && cli->fast_cmd != 2)
+	if (aux->fast_cmd != 0 && aux->fast_cmd != 2)
 	{
 		fprintf(stderr,"Option --fast may be given only for the \"sync\" command\n");
 		return 0;
 	}
-	if (cli->n_cmd != 0 && cli->n_cmd != 2)
+	if (aux->n_cmd != 0 && aux->n_cmd != 2)
 	{
 		fprintf(stderr,"Option -n may be given only for the \"sync\" command\n");
 		return 0;
 	}
-	if (cli->dry_run_cmd != 0 && cli->dry_run_cmd != 2)
+	if (aux->dry_run_cmd != 0 && aux->dry_run_cmd != 2)
 	{
 		fprintf(stderr,"Option --dry-run may be given only for the \"sync\" command\n");
 		return 0;
@@ -93,8 +97,8 @@ static int validate_cli(struct cli *cli)
 	}
 	if (cli->sync)
 	{
-		cli->files_count = cli->variadic_argc;
-		cli->files = cli->variadic_argv;
+		cli->files_count = aux->variadic_argc;
+		cli->files = aux->variadic_argv;
 	}
 	else
 	{
@@ -119,7 +123,7 @@ static int usage_cli(char *cmd, struct cli *cli)
 	return 1;
 }
 
-static int parse_cli_simple(int argc, char *argv[], struct cli *cli)
+static int parse_cli_simple(int argc, char *argv[], struct cli *cli, struct cli_aux *aux)
 {
 	int i;
 	int cur_command = -1;
@@ -129,33 +133,33 @@ static int parse_cli_simple(int argc, char *argv[], struct cli *cli)
 		if (!strcmp("--dry-run", argv[i]))
 		{
 			cli->dry_run = 1;
-			cli->dry_run_cmd = cur_command;
+			aux->dry_run_cmd = cur_command;
 		}
 		else if (!strcmp("--fast", argv[i]))
 		{
 			cli->fast = 1;
-			cli->fast_cmd = cur_command;
+			aux->fast_cmd = cur_command;
 		}
 		else if (!strcmp("--help", argv[i]))
 		{
 			cli->help = 1;
-			cli->help_cmd = cur_command;
+			aux->help_cmd = cur_command;
 		}
 		else if (!strcmp("-n", argv[i]))
 		{
 			cli->n = 1;
-			cli->n_cmd = cur_command;
+			aux->n_cmd = cur_command;
 		}
 		else if (!strcmp("sync", argv[i]))
 		{
 			cli->sync = 1;
-			cli->sync_pos = i;
+			aux->sync_pos = i;
 			cur_command = 2;
 		}
 		else if (cur_position == 0 && cur_command == 2)
 		{
-			cli->variadic_argv = &argv[i];
-			cli->variadic_argc = argc - i;
+			aux->variadic_argv = &argv[i];
+			aux->variadic_argc = argc - i;
 			break;
 		}
 		else
@@ -169,16 +173,18 @@ static int parse_cli_simple(int argc, char *argv[], struct cli *cli)
 
 static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_t opts)
 {
+	struct cli_aux aux;
 	char *cmd = argv[0];
+	memset(&aux, sizeof(aux), 0);
 	argc--;
 	argv++;
-	if (!parse_cli_simple(argc, argv, cli))
+	if (!parse_cli_simple(argc, argv, cli, &aux))
 	{
 		return 0;
 	}
 	if (opts & POF_VALIDATE)
 	{
-		if (!validate_cli(cli))
+		if (!validate_cli(cli, &aux))
 		{
 			return 0;
 		}
