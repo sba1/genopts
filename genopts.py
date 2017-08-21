@@ -476,7 +476,7 @@ def write_command_validation(gf, command_index_map, parent_map, option_with_args
         # Make list of conditions
         conds = ["aux->{0} != {1}".format(cur_command_name, pi) for pi in set(parent_indices)]
         valid_commands = ['\\"' + vc + '\\"' for vc in parent_names]
-        valid_commands_text = join_enum(valid_commands, "and") + " command"
+        valid_commands_text = join_enum(sorted(set(valid_commands)), "and") + " command"
 
         gf.writeline("if (aux->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
         gf.writeline("{")
