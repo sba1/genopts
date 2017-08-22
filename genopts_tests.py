@@ -91,6 +91,15 @@ class TestParser(unittest.TestCase):
             self.assertEquals("file", opts[0].command)
             self.assertFalse(opts[0].variadic)
 
+    def test_parse_pattern_first_is_optional(self):
+        # type: () -> None
+        parse_tree = parse_pattern("branch [<oldbranch>] <newbranch>")
+        visitor = DetermineOptArgThenArgVisitor()
+        navigate(parse_tree, visitor)
+        self.assertEquals(1, len(visitor.arg_pairs))
+        self.assertEquals("oldbranch", visitor.arg_pairs[0][0].command)
+        self.assertEquals("newbranch", visitor.arg_pairs[0][1].command)
+
     def test_parse_two_patterns(self):
         # type: () -> None
         parse_tree = []
