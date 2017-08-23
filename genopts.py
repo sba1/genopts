@@ -829,7 +829,14 @@ class DetermineOptArgThenArgVisitor(Visitor):
     def __init__(self):
         self.possible_arg_state = 0
         self.args = [] # type: List[Arg]
-        self.arg_pairs = [] # type: List[Tuple[Arg, Arg]]
+        self.command_arg_pairs = {} # type: Dict[str, List[Tuple[Arg, Arg]]]
+        self.cur_command = None # type: Command
+
+    def visit_command(self, n):
+        # type: (Command) -> None
+        self.cur_command = n
+        if n.command not in self.command_arg_pairs:
+            self.command_arg_pairs[n.command] = []
 
     def visit_arg(self, n):
         # type: (Arg) -> None
@@ -837,7 +844,7 @@ class DetermineOptArgThenArgVisitor(Visitor):
             self.args.append(n)
             self.possible_arg_state = 2
         if self.possible_arg_state == 3:
-            self.arg_pairs.append((self.args[0], n))
+            self.command_arg_pairs[self.cur_command.command].append((self.args[0], n))
             self.possible_arg_state = 0
 
     def enter_optional(self, n):
