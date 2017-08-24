@@ -1001,7 +1001,7 @@ def genopts(patterns):
     gf.writeline("{")
     gf.writeline("struct cli_aux aux;")
     gf.writeline("char *cmd = argv[0];")
-    gf.writeline("memset(&aux, sizeof(aux), 0);")
+    gf.writeline("memset(&aux, 0, sizeof(aux));")
     gf.writeline("argc--;")
     gf.writeline("argv++;")
     gf.writeline("if (!parse_cli_simple(argc, argv, cli, &aux))")
