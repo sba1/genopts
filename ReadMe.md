@@ -175,7 +175,7 @@ static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_
 {
 	struct cli_aux aux;
 	char *cmd = argv[0];
-	memset(&aux, sizeof(aux), 0);
+	memset(&aux, 0, sizeof(aux));
 	argc--;
 	argv++;
 	if (!parse_cli_simple(argc, argv, cli, &aux))
