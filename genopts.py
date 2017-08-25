@@ -488,14 +488,24 @@ def write_command_validation(gf, command_index_map, parent_map, option_with_args
 
 class CommandListExtractorVisitor(Visitor):
     def __init__(self, gf, all_commands):
-        # type: (GenFile, List[Tuple[List[Command],List[Arg]]]) -> None
+        # type: (GenFile, List[Tuple[List[Command],List[Arg],Set[str]]]) -> None
         self.gf = gf
-        self.all_commands = all_commands # type: List[Tuple[List[Command], List[Arg]]]
-        self.commands = ([],[]) # type: Tuple[List[Command],List[Arg]]
+        # FIXME: Use class instead of this tuple
+        self.all_commands = all_commands # type: List[Tuple[List[Command], List[Arg], Set[str]]]
+        self.commands = ([],[],set()) # type: Tuple[List[Command],List[Arg],Set[str]]
+        self.optional = 0
 
     def enter_pattern(self, n):
         # type: (Pattern) -> None
-        self.commands = ([],[]) # type: Tuple[List[Command],List[Arg]]
+        self.commands = ([],[],set()) # type: Tuple[List[Command],List[Arg]]
+
+    def enter_optional(self, n):
+        # type: (Optional) -> None
+        self.optional = self.optional + 1
+
+    def leave_optional(self, n):
+        # type: (Optional) -> None
+        self.optional = self.optional - 1
 
     def leave_pattern(self, n):
         # type: (Pattern) -> None
@@ -508,6 +518,8 @@ class CommandListExtractorVisitor(Visitor):
     def visit_arg(self, n):
         # type: (Arg) -> None
         self.commands[1].append(n)
+        if self.optional > 0:
+            self.commands[2].add(n.command)
 
 ################################################################################
 
@@ -923,7 +935,7 @@ def genopts(patterns):
     gf.writeline()
 
     option_with_args = [] # type: List[OptionWithArg]
-    all_commands = [] # type: List[Tuple[List[Command], List[Arg]]]
+    all_commands = [] # type: List[Tuple[List[Command], List[Arg], Set[str]]]
     navigate(template, OptionWithArgExtractorVisitor(True, option_with_args))
     navigate(template, CommandListExtractorVisitor(gf, all_commands))
 
