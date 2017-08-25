@@ -98,8 +98,8 @@ class TestParser(unittest.TestCase):
         navigate(parse_tree, visitor)
         self.assertEquals(1, len(visitor.command_arg_pairs))
         self.assertTrue('branch' in visitor.command_arg_pairs)
-        self.assertEquals("oldbranch", visitor.command_arg_pairs['branch'][0][0].command)
-        self.assertEquals("newbranch", visitor.command_arg_pairs['branch'][0][1].command)
+        self.assertEquals("oldbranch", visitor.command_arg_pairs.pairs['branch'][0][0].command)
+        self.assertEquals("newbranch", visitor.command_arg_pairs.pairs['branch'][0][1].command)
 
     def test_parse_two_patterns(self):
         # type: () -> None
