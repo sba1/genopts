@@ -849,43 +849,6 @@ class CommandArgPairs():
         # type: () -> int
         return len(self.pairs)
 
-class DetermineOptArgThenArgVisitor(Visitor):
-    def __init__(self):
-        self.possible_arg_state = 0
-        self.args = [] # type: List[Arg]
-        self.command_arg_pairs = CommandArgPairs()
-        self.cur_command = None # type: Command
-
-    def visit_command(self, n):
-        # type: (Command) -> None
-        self.cur_command = n
-        if n.command not in self.command_arg_pairs:
-            self.command_arg_pairs.pairs[n.command] = []
-
-    def visit_arg(self, n):
-        # type: (Arg) -> None
-        if self.possible_arg_state == 1:
-            self.args.append(n)
-            self.possible_arg_state = 2
-        if self.possible_arg_state == 3:
-            self.command_arg_pairs.pairs[self.cur_command.command].append((self.args[0], n))
-            self.possible_arg_state = 0
-
-    def enter_optional(self, n):
-        # type (Optional) -> None
-        self.possible_arg_state = 1
-        self.args = []
-
-    def leave_optional(self, n):
-        if self.possible_arg_state == 2:
-            self.possible_arg_state = 3
-        else:
-            self.possible_arg_state = 0
-
-    def enter_pattern(self, n):
-        self.possible_arg_state = 0
-        self.args = []
-
 def write_struct(gf, variables):
     # type: (GenFile, Variables) -> None
     sorted_field_names = sorted([k for k in variables.variables])
