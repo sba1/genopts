@@ -487,9 +487,8 @@ def write_command_validation(gf, command_index_map, parent_map, option_with_args
 ################################################################################
 
 class CommandListExtractorVisitor(Visitor):
-    def __init__(self, gf, all_commands):
-        # type: (GenFile, List[Tuple[List[Command],List[Arg],Set[str]]]) -> None
-        self.gf = gf
+    def __init__(self, all_commands):
+        # type: (List[Tuple[List[Command],List[Arg],Set[str]]]) -> None
         # FIXME: Use class instead of this tuple
         self.all_commands = all_commands # type: List[Tuple[List[Command], List[Arg], Set[str]]]
         self.commands = ([],[],set()) # type: Tuple[List[Command],List[Arg],Set[str]]
@@ -937,7 +936,7 @@ def genopts(patterns):
     option_with_args = [] # type: List[OptionWithArg]
     all_commands = [] # type: List[Tuple[List[Command], List[Arg], Set[str]]]
     navigate(template, OptionWithArgExtractorVisitor(True, option_with_args))
-    navigate(template, CommandListExtractorVisitor(gf, all_commands))
+    navigate(template, CommandListExtractorVisitor(all_commands))
 
     # Generates the validation function
     gf.writeline("static int validate_cli(struct cli *cli, struct cli_aux *aux)")
