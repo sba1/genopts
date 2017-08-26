@@ -957,16 +957,28 @@ def genopts(patterns):
         gf.writeline("{0} ({1})".format("if" if first else "else if", " && ".join(conds)))
         gf.writeline("{")
 
-        # Resolve positional arguments
-        # FIXME: There may be optional positional args before mandatory
-        #  positional ones. This is not yet reflected in this code.
-        for pos, arg in enumerate(commands[1]):
-            if arg.variadic:
-                gf.writeline("cli->{0}_count = aux->variadic_argc;".format(makecname(arg.command)))
-                gf.writeline("cli->{0} = aux->variadic_argv;".format(makecname(arg.command)))
-            else:
+        all_args = commands[1] # type: List[Arg]
+        optional_args = commands[2] # type: Set[str]
+
+        # FIXME: Generalize
+        if not any(a.variadic for a in all_args) and len(all_args) == 2 and len(optional_args) == 1 and all_args[0].command in optional_args:
+            gf.writeline("if (aux->positional{0} != NULL)".format(1))
+            gf.writeline("{")
+            for pos, arg in enumerate(commands[1]):
                 gf.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
-            makecname(arg.command)
+            gf.writeline("}")
+            gf.writeline("else")
+            gf.writeline("{")
+            gf.writeline("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
+            gf.writeline("}")
+        else:
+            # Resolve positional arguments
+            for pos, arg in enumerate(commands[1]):
+                if arg.variadic:
+                    gf.writeline("cli->{0}_count = aux->variadic_argc;".format(makecname(arg.command)))
+                    gf.writeline("cli->{0} = aux->variadic_argv;".format(makecname(arg.command)))
+                else:
+                    gf.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
 
         gf.writeline("}")
         first = False

@@ -94,12 +94,14 @@ class TestParser(unittest.TestCase):
     def test_parse_pattern_first_is_optional(self):
         # type: () -> None
         parse_tree = parse_pattern("branch [<oldbranch>] <newbranch>")
-        visitor = DetermineOptArgThenArgVisitor()
-        navigate(parse_tree, visitor)
-        self.assertEquals(1, len(visitor.command_arg_pairs))
-        self.assertTrue('branch' in visitor.command_arg_pairs)
-        self.assertEquals("oldbranch", visitor.command_arg_pairs.pairs['branch'][0][0].command)
-        self.assertEquals("newbranch", visitor.command_arg_pairs.pairs['branch'][0][1].command)
+        all_commands = [] # type: List[Tuple[List[Command], List[Arg], Set[str]]]
+        navigate(parse_tree, CommandListExtractorVisitor(all_commands))
+        self.assertEquals(1, len(all_commands))
+        combination = all_commands[0]
+        self.assertEquals(1, len(combination[0]))
+        self.assertEquals(2, len(combination[1]))
+        self.assertEquals(1, len(combination[2]))
+        self.assertIn('oldbranch', combination[2])
 
     def test_parse_two_patterns(self):
         # type: () -> None
