@@ -91,6 +91,13 @@ class TestParser(unittest.TestCase):
             self.assertEquals("file", opts[0].command)
             self.assertFalse(opts[0].variadic)
 
+    def test_parse_pattern_mandatory_flag(self):
+        # type: () -> None
+        parse_tree = parse_pattern("branch -d <branchname>")
+        self.assertIsNotNone(parse_tree)
+        self.assertEquals("branch", parse_tree.list[0].command)
+        self.assertEquals("-d", parse_tree.list[0].subcommand.command)
+
     def test_parse_pattern_first_is_optional(self):
         # type: () -> None
         parse_tree = parse_pattern("branch [<oldbranch>] <newbranch>")
