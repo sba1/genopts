@@ -605,6 +605,10 @@ class CommandIndexMap:
         self.cur_num = self.cur_num + 1
         return self.index[command.command]
 
+    def map_list(self, commands):
+        # type: (List[Command]) -> List[int]
+        return [self.map(c) for c in commands]
+
 class TokenActionMap:
     """
     Instances of this class represent token and their actions.
