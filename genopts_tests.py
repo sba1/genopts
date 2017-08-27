@@ -98,6 +98,14 @@ class TestParser(unittest.TestCase):
         self.assertEquals("branch", parse_tree.list[0].command)
         self.assertEquals("-d", parse_tree.list[0].subcommand.command)
 
+    def test_parse_pattern_mandatory_option(self):
+        # type: () -> None
+        parse_tree = parse_pattern("branch --set-upstream-to=<upstream>")
+        self.assertIsNotNone(parse_tree)
+        self.assertEquals("branch", parse_tree.list[0].command)
+        self.assertEquals("--set-upstream-to", parse_tree.list[0].subcommand.command)
+        self.assertEquals("upstream", parse_tree.list[0].subcommand.arg)
+
     def test_parse_pattern_first_is_optional(self):
         # type: () -> None
         parse_tree = parse_pattern("branch [<oldbranch>] <newbranch>")

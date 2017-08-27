@@ -26,18 +26,24 @@ class Command:
     A command contains a command string, a list of options (that may be empty)
     and an optional subcommand.
     """
-    def __init__(self, command, options, subcommand):
-        # type: (str, List[Union[Optional, Arg]], Command)->None
+    def __init__(self, command, options, subcommand, arg = None):
+        # type: (str, List[Union[Optional, Arg]], Command, str)->None
         self.command = command
+        self.arg = arg
         self.options = options
         self.subcommand = subcommand
+
     def __repr__(self):
         # type: ()->str
         if self.subcommand != None:
             subcommand = ", " + repr(self.subcommand)
         else:
             subcommand = ""
-        return "Command(" + self.command + ", " + repr(self.options) + subcommand + ')'
+        if self.arg is not None:
+            arg = ", arg=" + self.arg
+        else:
+            arg = ""
+        return "Command(" + self.command + arg + ", "  + repr(self.options) + subcommand + ')'
 
 class Arg:
     """Contains an argument"""
@@ -111,6 +117,8 @@ def is_special(c):
         return True
     if c == ']':
         return True
+    if c == '=':
+        return True
     return False
 
 def parse_command_token(command):
@@ -132,10 +140,17 @@ def parse_command(command):
     if rem is None:
         return None, None
 
+    arg = None # type: Arg
     options = [] # type: List[Union[Optional, Arg]]
     subcommand = None # type: Command
 
     while rem is not None and len(rem) != 0:
+        if rem[0] == '=' and arg is None:
+            # Try comment arg
+            new_rem, arg = parse_arg(rem[1:])
+            if new_rem is not None:
+                rem = new_rem
+                continue
         rem = skip_spaces(rem)
         if rem is None:
             break
@@ -161,7 +176,7 @@ def parse_command(command):
 
         rem = new_rem
 
-    return rem, Command(command_tk, options, subcommand)
+    return rem, Command(command_tk, options, subcommand, arg)
 
 def parse_arg(arg):
     # type: (str) -> Tuple[str, str]
