@@ -943,6 +943,14 @@ def genopts(patterns):
                 else:
                     gf.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
 
+        for a in all_args:
+            if a.command not in optional_args:
+                gf.writeline("if (!cli->{0})".format(makecname(a.command)))
+                gf.writeline("{")
+                gf.writeline("fprintf(stderr, \"Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command))
+                gf.writeline("return 0;")
+                gf.writeline("}")
+
         gf.writeline("}")
         first = False
     if not first:
