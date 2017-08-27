@@ -915,7 +915,21 @@ def genopts(patterns):
     write_command_validation(gf, context.command_index_map, context.parent_map, option_with_args)
     navigate(template, GenerateMXValidatorVisitor(gf))
 
-    # Proper commands specified
+    # Determine the maximal number of commands for all patterns
+    max_commands = max(len(context.command_index_map.map_list(key[0])) for key in all_commands)
+
+    def all_commands_key(key):
+        # type: (Tuple[List[Command], List[Arg], Set[str]]) -> List[int]
+        """
+        The function that turns a Tuple into a key that is suitable for sorting.
+        We basicall return the int list mapped from the commands filled up with
+        some large numbers because we want to compare shorter patterns later.
+        """
+        return context.command_index_map.map_list(key[0]) + [999] * max_commands
+
+    all_commands = sorted(all_commands, key=all_commands_key)
+
+    # Add a check for proper command specificiation
     first = True
     for commands in all_commands:
         conds = [] # type: List[str]
