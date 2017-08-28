@@ -631,16 +631,19 @@ class TokenActionMap:
     def __init__(self):
         # type: () -> None
         self.token_action_map = dict() # type: Dict[str,List[str]]
+        self.token_requires_arg = set() # type: Set[str]
 
     def __contains__(self, item):
         # type: (str) -> bool
         return item in self.token_action_map
 
-    def add(self, token, action):
+    def add(self, token, action, requires_arg=False):
         # type: (str, str) -> None
         if token not in self.token_action_map:
             self.token_action_map[token] = []
         self.token_action_map[token].append(action)
+        if requires_arg:
+            self.token_requires_arg.add(token)
 
     def write(self, gf):
         # type: (GenFile) -> None
