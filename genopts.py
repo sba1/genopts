@@ -638,7 +638,7 @@ class TokenActionMap:
         return item in self.token_action_map
 
     def add(self, token, action, requires_arg=False):
-        # type: (str, str) -> None
+        # type: (str, str, bool) -> None
         if token not in self.token_action_map:
             self.token_action_map[token] = []
         self.token_action_map[token].append(action)
