@@ -140,7 +140,7 @@ def parse_command(command):
     if rem is None:
         return None, None
 
-    arg = None # type: Arg
+    arg = None # type: str
     options = [] # type: List[Union[Optional, Arg]]
     subcommand = None # type: Command
 
