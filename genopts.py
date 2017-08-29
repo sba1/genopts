@@ -342,6 +342,9 @@ class GenFile:
 
     def writeline(self, str=""):
         # type: (str)->None
+        if len(str) == 0:
+            print('',file=self.f)
+            return
         if str.startswith('}'):
             self.level = self.level - 1;
         print('\t' * self.level + str,file=self.f)
