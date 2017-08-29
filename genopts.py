@@ -655,7 +655,11 @@ class TokenActionMap:
                 first = False
             else:
                 el = 'else '
-            gf.writeline('{0}if (!strcmp("{1}", argv[i]))'.format(el, token))
+            if token in self.token_requires_arg:
+                token_len = len(token)
+                gf.writeline('{0}if (!strncmp("{1}", argv[i], {2}) && (argv[i][{2}]==\'=\' || !argv[i][{2}]))'.format(el, token, token_len - 1))
+            else:
+                gf.writeline('{0}if (!strcmp("{1}", argv[i]))'.format(el, token))
 
             gf.writeline("{")
             for a in self.token_action_map[token]:
@@ -780,12 +784,16 @@ class GenerateParserVisitor(Visitor):
     def visit_command(self, n):
         # type: (Command) -> None
         cmd = n.command
+        cmd_requires_arg = n.arg != None
 
         field_name = makename(n)
         pos_name = field_name + "_pos"
 
         self.context.add_cli_var(field_name, "int")
         self.context.add_aux_var(pos_name, "int")
+
+        if cmd_requires_arg:
+            self.context.add_cli_var(makecname(n.arg), "char *")
 
         # Remember parent
         self.parent_map.add_command(n, self.cur_command)
@@ -795,9 +803,31 @@ class GenerateParserVisitor(Visitor):
         cur_command_idx = self.command_index_map.map(n)
 
         if cmd not in self.token_action_map:
-            self.token_action_map.add(cmd, "cli->{0} = 1;".format(field_name))
-            self.token_action_map.add(cmd, "aux->{0} = i;".format(pos_name))
-            self.token_action_map.add(cmd, "cur_command = {0};".format(cur_command_idx))
+            self.token_action_map.add(cmd, "cli->{0} = 1;".format(field_name), cmd_requires_arg)
+            self.token_action_map.add(cmd, "aux->{0} = i;".format(pos_name), cmd_requires_arg)
+            self.token_action_map.add(cmd, "cur_command = {0};".format(cur_command_idx), cmd_requires_arg)
+
+            if cmd_requires_arg:
+                self.token_action_map.add(cmd, "")
+                self.token_action_map.add(cmd, "if (!argv[i][{0}])".format(len(cmd) - 1))
+                self.token_action_map.add(cmd, "{")
+                self.token_action_map.add(cmd, "if (i + 1 < argc)")
+                self.token_action_map.add(cmd, "{")
+
+                self.token_action_map.add(cmd, "cli->{0} = argv[i+1];".format(makecname(n.arg)))
+                self.token_action_map.add(cmd, "i++;")
+
+                self.token_action_map.add(cmd, "}")
+                self.token_action_map.add(cmd, "else")
+                self.token_action_map.add(cmd, "{")
+                self.token_action_map.add(cmd, "fprintf(stderr, \"Argument \\\"{0}\\\" requires a value\\n\");".format(cmd))
+                self.token_action_map.add(cmd, "return 0;")
+                self.token_action_map.add(cmd, "}")
+                self.token_action_map.add(cmd, "}")
+                self.token_action_map.add(cmd, "else")
+                self.token_action_map.add(cmd, "{")
+                self.token_action_map.add(cmd, "cli->{0} = &argv[i][{1}];".format(makecname(n.arg), len(cmd)))
+                self.token_action_map.add(cmd, "}")
 
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg) -> None
