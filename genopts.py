@@ -993,6 +993,7 @@ def genopts(patterns):
         gf.writeline("else")
         gf.writeline("{")
         gf.writeline('fprintf(stderr,"Please specify a proper command. Use --help for usage.\\n");')
+        gf.writeline("return 0;")
         gf.writeline("}")
 
     gf.writeline("return 1;")
