@@ -141,13 +141,14 @@ def parse_command(command):
         return None, None
 
     arg = None # type: str
+    carg = None # type: str # direct command argument
     options = [] # type: List[Union[Optional, Arg]]
     subcommand = None # type: Command
 
     while rem is not None and len(rem) != 0:
         if rem[0] == '=' and arg is None:
             # Try comment arg
-            new_rem, arg = parse_arg(rem[1:])
+            new_rem, carg = parse_arg(rem[1:])
             if new_rem is not None:
                 rem = new_rem
                 continue
@@ -176,7 +177,7 @@ def parse_command(command):
 
         rem = new_rem
 
-    return rem, Command(command_tk, options, subcommand, arg)
+    return rem, Command(command_tk, options, subcommand, carg)
 
 def parse_arg(arg):
     # type: (str) -> Tuple[str, str]
