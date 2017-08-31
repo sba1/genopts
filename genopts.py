@@ -340,17 +340,23 @@ class GenFile:
         self.f = f
         # Stores the indendation level
         self.level = 0 # type: int
+        self.generated_code = [] # type: List[str]
 
     def writeline(self, str=""):
         # type: (str)->None
         if len(str) == 0:
-            print('',file=self.f)
+            self.generated_code.append('')
             return
         if str.startswith('}'):
             self.level = self.level - 1;
-        print('\t' * self.level + str,file=self.f)
+        self.generated_code.append('\t' * self.level + str)
         if str == '{':
             self.level = self.level + 1
+
+    def flush(self):
+        # type: () -> None
+        for l in self.generated_code:
+            print(l, file=self.f)
 
 ################################################################################
 
@@ -1100,6 +1106,8 @@ def genopts(patterns):
     gf.writeline("return 1;")
     gf.writeline("}")
     gf.writeline()
+    gf.flush()
+
 def main():
     # type: ()->None
     lines = sys.stdin.readlines()
