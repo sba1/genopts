@@ -134,12 +134,10 @@ class TestParser(unittest.TestCase):
         parse_tree.append(parse_pattern("[--common-option] cmd1 [--same] [--cmd1-option]"))
         parse_tree.append(parse_pattern("[--common-option] cmd2 [--same] [--cmd2-option]"))
         template = Template(parse_tree)
-        gf = GenFile(f=open("/dev/zero","w"))
         context = GeneratorContext()
         token_action_map = context.token_action_map
         navigate(template, GenerateParserVisitor(context))
 
-        gf = GenFile()
         self.assertTrue("--common-option" in token_action_map)
         self.assertTrue("--same" in token_action_map)
         self.assertTrue("--cmd1-option" in token_action_map)
