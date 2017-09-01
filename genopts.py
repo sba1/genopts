@@ -443,16 +443,12 @@ class GenerateMXValidatorVisitor(Visitor):
         if len(self.cmds) < 2:
             return
 
-        self.gf.writeline("{")
-        self.gf.writeline("int count = 0;")
-        for cmd in self.cmds:
-            self.gf.writeline("count += !!cli->{0};".format(makename(cmd)))
+        conds = " + ".join("!!cli->{0}".format(makename(cmd)) for cmd in self.cmds)
         opts = [cmd.command for cmd in self.cmds]
-        self.gf.writeline("if (count > 1)")
+        self.gf.writeline("if (({0}) > 1)".format(conds))
         self.gf.writeline("{")
         self.gf.writeline("fprintf(stderr, \"Only one of {0} may be given\\n\");".format(join_enum(opts, "or")))
         self.gf.writeline("return 0;")
-        self.gf.writeline("}")
         self.gf.writeline("}")
 
     def visit_option_with_arg(self, n):

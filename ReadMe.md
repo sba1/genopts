@@ -85,15 +85,10 @@ static int validate_cli(struct cli *cli, struct cli_aux *aux)
 		fprintf(stderr,"Option --dry-run may be given only for the \"sync\" command\n");
 		return 0;
 	}
+	if ((!!cli->n + !!cli->dry_run) > 1)
 	{
-		int count = 0;
-		count += !!cli->n;
-		count += !!cli->dry_run;
-		if (count > 1)
-		{
-			fprintf(stderr, "Only one of -n or --dry-run may be given\n");
-			return 0;
-		}
+		fprintf(stderr, "Only one of -n or --dry-run may be given\n");
+		return 0;
 	}
 	if (cli->sync)
 	{
