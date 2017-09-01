@@ -334,13 +334,13 @@ def parse_pattern(pattern):
     return Pattern(l)
 
 ################################################################################
-class GenFile:
+class GenFile(object):
     def __init__(self, f=sys.stdout):
         # type: (IO[str])->None
         self.f = f
         # Stores the indendation level
         self.level = 0 # type: int
-        self.generated_code = [] # type: List[str]
+        self.generated_code = [] # type: List[Union[str,Function]]
 
     def writeline(self, str=""):
         # type: (str)->None
@@ -353,10 +353,28 @@ class GenFile:
         if str == '{':
             self.level = self.level + 1
 
+    def add(self, node):
+        # type: (Function) -> None
+        node.level = 1
+        self.generated_code.append(node)
+
     def flush(self):
         # type: () -> None
         for l in self.generated_code:
-            print(l, file=self.f)
+            if isinstance(l, basestring):
+                print(l, file=self.f)
+            elif isinstance(l, Function):
+                print(l.prototype, file=self.f)
+                print('{', file=self.f)
+                l.flush()
+                print('}', file=self.f)
+
+class Function(GenFile):
+    def __init__(self, parent, prototype):
+        # (GenFile, str) -> None
+        super(Function, self).__init__(parent.f)
+        self.prototype = prototype
+        self.level = 1
 
 ################################################################################
 
@@ -960,14 +978,13 @@ def genopts(patterns):
     navigate(template, CommandListExtractorVisitor(all_commands))
 
     # Generates the validation function
-    gf.writeline("static int validate_cli(struct cli *cli, struct cli_aux *aux)")
-    gf.writeline("{")
-    gf.writeline("if (cli->help)")
-    gf.writeline("{")
-    gf.writeline("return 1;")
-    gf.writeline("}")
-    write_command_validation(gf, context.command_index_map, context.parent_map, option_with_args)
-    navigate(template, GenerateMXValidatorVisitor(gf))
+    vc = Function(gf, "static int validate_cli(struct cli *cli, struct cli_aux *aux)")
+    vc.writeline("if (cli->help)")
+    vc.writeline("{")
+    vc.writeline("return 1;")
+    vc.writeline("}")
+    write_command_validation(vc, context.command_index_map, context.parent_map, option_with_args)
+    navigate(template, GenerateMXValidatorVisitor(vc))
 
     # Determine the maximal number of commands for all patterns
     max_commands = max(len(context.command_index_map.map_list(key[0])) for key in all_commands)
@@ -989,51 +1006,51 @@ def genopts(patterns):
         conds = [] # type: List[str]
         for command in commands[0]:
             conds.append("cli->{0}".format(makename(command)))
-        gf.writeline("{0} ({1})".format("if" if first else "else if", " && ".join(conds)))
-        gf.writeline("{")
+        vc.writeline("{0} ({1})".format("if" if first else "else if", " && ".join(conds)))
+        vc.writeline("{")
 
         all_args = commands[1] # type: List[Arg]
         optional_args = commands[2] # type: Set[str]
 
         # FIXME: Generalize
         if not any(a.variadic for a in all_args) and len(all_args) == 2 and len(optional_args) == 1 and all_args[0].command in optional_args:
-            gf.writeline("if (aux->positional{0} != NULL)".format(1))
-            gf.writeline("{")
+            vc.writeline("if (aux->positional{0} != NULL)".format(1))
+            vc.writeline("{")
             for pos, arg in enumerate(commands[1]):
-                gf.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
-            gf.writeline("}")
-            gf.writeline("else")
-            gf.writeline("{")
-            gf.writeline("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
-            gf.writeline("}")
+                vc.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
+            vc.writeline("}")
+            vc.writeline("else")
+            vc.writeline("{")
+            vc.writeline("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
+            vc.writeline("}")
         else:
             # Resolve positional arguments
             for pos, arg in enumerate(commands[1]):
                 if arg.variadic:
-                    gf.writeline("cli->{0}_count = aux->variadic_argc;".format(makecname(arg.command)))
-                    gf.writeline("cli->{0} = aux->variadic_argv;".format(makecname(arg.command)))
+                    vc.writeline("cli->{0}_count = aux->variadic_argc;".format(makecname(arg.command)))
+                    vc.writeline("cli->{0} = aux->variadic_argv;".format(makecname(arg.command)))
                 else:
-                    gf.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
+                    vc.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
 
         for a in all_args:
             if a.command not in optional_args:
-                gf.writeline("if (!cli->{0})".format(makecname(a.command)))
-                gf.writeline("{")
-                gf.writeline("fprintf(stderr, \"Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command))
-                gf.writeline("return 0;")
-                gf.writeline("}")
+                vc.writeline("if (!cli->{0})".format(makecname(a.command)))
+                vc.writeline("{")
+                vc.writeline("fprintf(stderr, \"Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command))
+                vc.writeline("return 0;")
+                vc.writeline("}")
 
-        gf.writeline("}")
+        vc.writeline("}")
         first = False
     if not first:
-        gf.writeline("else")
-        gf.writeline("{")
-        gf.writeline('fprintf(stderr,"Please specify a proper command. Use --help for usage.\\n");')
-        gf.writeline("return 0;")
-        gf.writeline("}")
+        vc.writeline("else")
+        vc.writeline("{")
+        vc.writeline('fprintf(stderr,"Please specify a proper command. Use --help for usage.\\n");')
+        vc.writeline("return 0;")
+        vc.writeline("}")
 
-    gf.writeline("return 1;")
-    gf.writeline("}")
+    vc.writeline("return 1;")
+    gf.add(vc)
 
     gf.writeline()
     gf.writeline("/**")
