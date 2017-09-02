@@ -114,7 +114,8 @@ class TestParser(unittest.TestCase):
         self.assertEquals("--set-upstream-to", parse_tree.list[0].subcommand.command)
         self.assertIsNone(parse_tree.list[0].subcommand.arg)
         self.assertEquals(1, len(parse_tree.list[0].subcommand.options))
-        self.assertEquals("upstream", parse_tree.list[0].subcommand.options[0].command)
+        if isinstance(parse_tree.list[0].subcommand.options[0], Command):
+            self.assertEquals("upstream", parse_tree.list[0].subcommand.options[0].command)
 
     def test_parse_pattern_first_is_optional(self):
         # type: () -> None

@@ -91,7 +91,7 @@ class Pattern:
 class Template:
     """Contains patterns"""
     def __init__(self, list):
-        # type: (List[Template])->None
+        # type: (List[Pattern])->None
         self.list = list
     def __repr__(self):
         # type: ()->str
@@ -317,19 +317,20 @@ def parse_optional(optional):
     return rem[1:], Optional(l)
 
 def parse_pattern(pattern):
+    # type: (str) -> Pattern
     rem = pattern
-    l = []
+    l = [] # type: List[Command]
     while rem is not None and len(rem) != 0:
         rem = skip_spaces(rem)
         next_rem, command = parse_command(rem)
         if next_rem is not None:
             l.append(command)
         else:
-            # TODO: Add dummy command
             next_rem, optional = parse_optional(rem)
-            l.append(optional)
+            command = Command("", [optional], None)
+            l.append(command)
         if next_rem is None:
-            return
+            return None
         rem = next_rem
     return Pattern(l)
 
