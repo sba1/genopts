@@ -365,16 +365,18 @@ class GenFile(object):
             if isinstance(l, basestring):
                 print(l, file=self.f)
             elif isinstance(l, Function):
-                print(l.prototype, file=self.f)
+                print("{0} {1}({2})".format(l.output, l.name, ", ".join(l.input), file=self.f))
                 print('{', file=self.f)
                 l.flush()
                 print('}', file=self.f)
 
 class Function(GenFile):
-    def __init__(self, parent, prototype):
-        # (GenFile, str) -> None
+    def __init__(self, parent, name, output, input):
+        # (GenFile, str, str, List[str]) -> None
         super(Function, self).__init__(parent.f)
-        self.prototype = prototype
+        self.name = name
+        self.output = output
+        self.input = input
         self.level = 1
 
 ################################################################################
@@ -979,7 +981,10 @@ def genopts(patterns):
     navigate(template, CommandListExtractorVisitor(all_commands))
 
     # Generates the validation function
-    vc = Function(gf, "static int validate_cli(struct cli *cli, struct cli_aux *aux)")
+    vc = Function(gf,
+        output="static int",
+        name="validate_cli",
+        input=['struct cli *cli', 'struct cli_aux *aux'])
     vc.writeline("if (cli->help)")
     vc.writeline("{")
     vc.writeline("return 1;")
