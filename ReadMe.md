@@ -167,6 +167,15 @@ static int parse_cli_simple(int argc, char *argv[], struct cli *cli, struct cli_
 	return 1;
 }
 
+/**
+ * Parse the given arguments and fill the struct cli accordingly.
+ *
+ * @param argc as in main()
+ * @param argv as in main()
+ * @param cli the filled struct
+ * @param opts some options to modify the behaviour of the function.
+ * @return 1 if parsing was successful, 0 otherwise.
+ */
 static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_t opts)
 {
 	struct cli_aux aux;
