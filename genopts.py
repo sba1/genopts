@@ -613,19 +613,33 @@ class CommandArgPairs():
         # type: () -> int
         return len(self.pairs)
 
-def write_struct(gf, variables):
-    # type: (GenFile, Variables) -> None
-    sorted_field_names = sorted([k for k in variables.variables])
+class Backend(object):
+    def __init__(self):
+        #type: () -> None
+        pass
 
-    gf.writeline("struct {0}".format(variables.name))
-    gf.writeline("{")
-    for k in sorted_field_names:
-        t = variables.variables[k].vtype
-        space = ' '
-        if t.endswith('*'):
-            space = ''
-        gf.writeline("{0}{1}{2};".format(t, space, k))
-    gf.writeline("};")
+    def write_variables(self, gf, variables):
+        #type: (GenFile, Variables) -> None
+        pass
+
+class CBackend(Backend):
+    def __init__(self):
+        #type: () -> None
+        super(CBackend, self).__init__()
+
+    def write_variables(self, gf, variables):
+        #type: (GenFile, Variables) -> None
+        sorted_field_names = sorted([k for k in variables.variables])
+
+        gf.writeline("struct {0}".format(variables.name))
+        gf.writeline("{")
+        for k in sorted_field_names:
+            t = variables.variables[k].vtype
+            space = ' '
+            if t.endswith('*'):
+                space = ''
+            gf.writeline("{0}{1}{2};".format(t, space, k))
+        gf.writeline("};")
 
 def genopts(patterns):
     # type: (List[str])->None
@@ -634,6 +648,7 @@ def genopts(patterns):
     #print(template)
     gf = GenFile()
 
+    backend = CBackend()
 
     gf.writeline("#include <stdio.h>")
     gf.writeline("#include <string.h>")
@@ -648,9 +663,9 @@ def genopts(patterns):
         context.token_action_map.add("--help", "cli->help = 1;")
         context.token_action_map.add("--help", "aux->help_cmd = cur_command;")
 
-    write_struct(gf, context.cli_vars)
+    backend.write_variables(gf, context.cli_vars)
     gf.writeline()
-    write_struct(gf, context.aux_vars)
+    backend.write_variables(gf, context.aux_vars)
     gf.writeline()
 
     gf.writeline("typedef enum")
