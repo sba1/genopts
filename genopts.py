@@ -515,7 +515,6 @@ class GenerateParserVisitor(Visitor):
         self.parent_map = context.parent_map
         self.token_action_map = context.token_action_map
         self.positional_action_map = context.positional_action_map
-        self.first = True
 
         # Start with 1 in case there options without commands and 0 means not
         # initialized
