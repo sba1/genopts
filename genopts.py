@@ -18,6 +18,11 @@ import sys
 
 from lib.parser import *
 
+# For MyPy
+if False:
+    from typing import Any
+
+
 ################################################################################
 
 class GenFile(object):
@@ -350,10 +355,14 @@ class TokenActionMap:
         return item in self.token_action_map
 
     def add(self, token, action, requires_arg=False):
-        # type: (str, str, bool) -> None
+        # type: (str, Union[str, Assignment], bool) -> None
         if token not in self.token_action_map:
             self.token_action_map[token] = []
-        self.token_action_map[token].append(action)
+        if isinstance(action, Assignment):
+            action_str = repr(action) + ";"
+        else:
+            action_str = action
+        self.token_action_map[token].append(action_str)
         if requires_arg:
             self.token_requires_arg.add(token)
 
@@ -421,6 +430,30 @@ class PositionalActionMap:
                     gf.writeline(a)
                 gf.writeline("}")
 
+class LValue:
+    def __init__(self, name, element):
+        # type: (str, Variable) -> None
+        self.name = name
+        self.element = element
+
+    def __lshift__(self, other):
+        # type: (Union[Variable,int]) -> Assignment
+        if isinstance(other, Variable):
+            value = other.name
+        else:
+            value = str(other)
+        return Assignment(self, value)
+
+class Assignment(object):
+    def __init__(self, left, right):
+        # type: (LValue, Any) -> None
+        self.left = left
+        self.right = right
+
+    def __repr__(self):
+        # type: () -> str
+        return self.left.name + "->" + self.left.element.name + " = " + str(self.right)
+
 class Variable:
     def __init__(self, name, vtype):
         # type: (str, str) -> None
@@ -437,6 +470,10 @@ class Variables:
     def add(self, name, vtype):
         # type: (str, str) -> None
         self.variables[name] = Variable(name, vtype)
+
+    def __getitem__(self, key):
+        # type: (str) -> Variable
+        return self.variables[key]
 
 class GeneratorContext:
     """
@@ -659,8 +696,13 @@ def genopts(patterns):
     if "--help" not in context.token_action_map:
         context.add_cli_var("help", "int")
         context.add_aux_var("help_cmd", "int")
-        context.token_action_map.add("--help", "cli->help = 1;")
-        context.token_action_map.add("--help", "aux->help_cmd = cur_command;")
+
+        cur_command = Variable("cur_command", "int")
+        help = LValue("cli", context.cli_vars["help"])
+        help_cmd = LValue("aux", context.aux_vars["help_cmd"])
+
+        context.token_action_map.add("--help", help << 1) # << means assignment
+        context.token_action_map.add("--help", help_cmd << cur_command) # << means assignment
 
     option_with_args = [] # type: List[OptionWithArg]
     all_commands = [] # type: List[Tuple[List[Command], List[Arg], Set[str]]]
