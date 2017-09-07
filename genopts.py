@@ -613,6 +613,8 @@ class CommandArgPairs():
         # type: () -> int
         return len(self.pairs)
 
+################################################################################
+
 class Backend(object):
     def __init__(self):
         #type: () -> None
@@ -621,6 +623,8 @@ class Backend(object):
     def write_variables(self, gf, variables):
         #type: (GenFile, Variables) -> None
         pass
+
+################################################################################
 
 class CBackend(Backend):
     def __init__(self):
@@ -640,6 +644,8 @@ class CBackend(Backend):
                 space = ''
             gf.writeline("{0}{1}{2};".format(t, space, k))
         gf.writeline("};")
+
+################################################################################
 
 def genopts(patterns):
     # type: (List[str])->None
