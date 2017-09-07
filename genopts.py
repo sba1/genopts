@@ -646,13 +646,6 @@ def genopts(patterns):
     parse_trees = [parse_pattern(p.strip()) for p in patterns]
     template = Template(parse_trees)
     #print(template)
-    gf = GenFile()
-
-    backend = CBackend()
-
-    gf.writeline("#include <stdio.h>")
-    gf.writeline("#include <string.h>")
-    gf.writeline()
 
     context = GeneratorContext()
     navigate(template, GenerateParserVisitor(context))
@@ -662,6 +655,19 @@ def genopts(patterns):
         context.add_aux_var("help_cmd", "int")
         context.token_action_map.add("--help", "cli->help = 1;")
         context.token_action_map.add("--help", "aux->help_cmd = cur_command;")
+
+    option_with_args = [] # type: List[OptionWithArg]
+    all_commands = [] # type: List[Tuple[List[Command], List[Arg], Set[str]]]
+    navigate(template, OptionWithArgExtractorVisitor(True, option_with_args))
+    navigate(template, CommandListExtractorVisitor(all_commands))
+
+    gf = GenFile()
+
+    backend = CBackend()
+
+    gf.writeline("#include <stdio.h>")
+    gf.writeline("#include <string.h>")
+    gf.writeline()
 
     backend.write_variables(gf, context.cli_vars)
     gf.writeline()
@@ -674,11 +680,6 @@ def genopts(patterns):
     gf.writeline("POF_USAGE = (1<<1)")
     gf.writeline("} parse_cli_options_t;")
     gf.writeline()
-
-    option_with_args = [] # type: List[OptionWithArg]
-    all_commands = [] # type: List[Tuple[List[Command], List[Arg], Set[str]]]
-    navigate(template, OptionWithArgExtractorVisitor(True, option_with_args))
-    navigate(template, CommandListExtractorVisitor(all_commands))
 
     # Generates the validation function
     vc = Function(gf,
