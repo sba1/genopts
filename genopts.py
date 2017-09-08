@@ -662,6 +662,10 @@ class Backend(object):
         #type: (GenFile, Variables) -> None
         pass
 
+    def write_multiline_comment(self, gf, comment):
+        # type: (GenFile, str) -> None
+        pass
+
 ################################################################################
 
 class CBackend(Backend):
@@ -684,7 +688,7 @@ class CBackend(Backend):
         gf.writeline("};")
 
     def write_multiline_comment(self, gf, comment):
-        # type: (GenFile, str)
+        # type: (GenFile, str) -> None
         """Write a multiline comment to the given file"""
         gf.writeline("/**")
         for l in comment.split("\n"):
