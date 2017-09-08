@@ -33,6 +33,9 @@ $ < sync.getopts ./genopts >sync_cli.c
 You get something like this:
 
 ```c
+/**
+ * Automatically generated file, please don't edit!
+ */
 #include <stdio.h>
 #include <string.h>
 

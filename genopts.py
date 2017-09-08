@@ -683,6 +683,14 @@ class CBackend(Backend):
             gf.writeline("{0}{1}{2};".format(t, space, k))
         gf.writeline("};")
 
+    def write_multiline_comment(self, gf, comment):
+        # type: (GenFile, str)
+        """Write a multiline comment to the given file"""
+        gf.writeline("/**")
+        for l in comment.split("\n"):
+            gf.writeline(" * " + l)
+        gf.writeline(" */")
+
 ################################################################################
 
 def genopts(patterns):
@@ -710,6 +718,8 @@ def genopts(patterns):
     gf = GenFile()
 
     backend = CBackend()
+
+    backend.write_multiline_comment(gf, "Automatically generated file, please don't edit!")
 
     gf.writeline("#include <stdio.h>")
     gf.writeline("#include <string.h>")
