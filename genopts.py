@@ -488,13 +488,15 @@ class GeneratorContext:
         self.token_action_map = TokenActionMap()
         self.positional_action_map = PositionalActionMap()
 
-    def add_cli_var(self, name, vtype):
-        # type: (str, str) -> None
+    def cli_var(self, name, vtype):
+        # type: (str, str) -> Variable
         self.cli_vars.add(name, vtype)
+        return self.cli_vars[name]
 
-    def add_aux_var(self, name, vtype):
-        # type: (str, str) -> None
+    def aux_var(self, name, vtype):
+        # type: (str, str) -> Variable
         self.aux_vars.add(name, vtype)
+        return self.aux_vars[name]
 
 class GenerateParserVisitor(Visitor):
     """
@@ -526,7 +528,7 @@ class GenerateParserVisitor(Visitor):
     def remember_pos(self, token, field_name):
         # type: (str, str) -> None
         cur_command_name = field_name + "_cmd"
-        self.context.add_aux_var(cur_command_name, "int")
+        self.context.aux_var(cur_command_name, "int")
         self.token_action_map.add(token, "aux->{0} = cur_command;".format(cur_command_name))
 
     def visit_command(self, n):
@@ -537,11 +539,11 @@ class GenerateParserVisitor(Visitor):
         field_name = makename(n)
         pos_name = field_name + "_pos"
 
-        self.context.add_cli_var(field_name, "int")
-        self.context.add_aux_var(pos_name, "int")
+        self.context.cli_var(field_name, "int")
+        self.context.aux_var(pos_name, "int")
 
         if cmd_requires_arg:
-            self.context.add_cli_var(makecname(n.arg), "char *")
+            self.context.cli_var(makecname(n.arg), "char *")
 
         # Remember parent
         self.parent_map.add_command(n, self.cur_command)
@@ -589,10 +591,10 @@ class GenerateParserVisitor(Visitor):
         if option not in self.token_action_map:
             field_name = makename(n)
             if n.arg == None:
-                self.context.add_cli_var(field_name, "int")
+                self.context.cli_var(field_name, "int")
                 self.token_action_map.add(option, "cli->{0} = 1;".format(field_name))
             else:
-                self.context.add_cli_var(field_name, "char *")
+                self.context.cli_var(field_name, "char *")
                 field_name = makename(n)
 
                 self.token_action_map.add(option, "if (++i == argc) break;")
@@ -607,25 +609,25 @@ class GenerateParserVisitor(Visitor):
         if n.variadic:
             count_field_name = field_name + "_count";
 
-            self.context.add_cli_var(field_name, "char **")
-            self.context.add_cli_var(count_field_name, "int")
+            self.context.cli_var(field_name, "char **")
+            self.context.cli_var(count_field_name, "int")
 
             # Use helper fields, the real one will be set in the validation phase
             variadic_field_name = 'variadic_argv'
             variadic_count_field_name = 'variadic_argc'
 
-            self.context.add_aux_var(variadic_field_name, "char **")
-            self.context.add_aux_var(variadic_count_field_name, "int")
+            self.context.aux_var(variadic_field_name, "char **")
+            self.context.aux_var(variadic_count_field_name, "int")
 
             self.positional_action_map.add(self.cur_position, cur_command_idx, "aux->{0} = &argv[i];".format(variadic_field_name))
             self.positional_action_map.add(self.cur_position, cur_command_idx, "aux->{0} = argc - i;".format(variadic_count_field_name))
             self.positional_action_map.add(self.cur_position, cur_command_idx, "break;")
         else:
-            self.context.add_cli_var(field_name, "char *")
+            self.context.cli_var(field_name, "char *")
 
             # Use helper fields, the real one will be set in the validation phase
             positional_field_name = 'positional{0}'.format(self.cur_position)
-            self.context.add_aux_var(positional_field_name, "char *")
+            self.context.aux_var(positional_field_name, "char *")
 
             self.positional_action_map.add(self.cur_position, cur_command_idx, "aux->{0} = argv[i];".format(positional_field_name))
             self.positional_action_map.add(self.cur_position, cur_command_idx, "cur_position++;")
@@ -693,12 +695,9 @@ def genopts(patterns):
     navigate(template, GenerateParserVisitor(context))
 
     if "--help" not in context.token_action_map:
-        context.add_cli_var("help", "int")
-        context.add_aux_var("help_cmd", "int")
-
         cur_command = Variable("cur_command", "int")
-        help = LValue("cli", context.cli_vars["help"])
-        help_cmd = LValue("aux", context.aux_vars["help_cmd"])
+        help = LValue("cli", context.cli_var("help", "int"))
+        help_cmd = LValue("aux", context.aux_var("help_cmd", "int"))
 
         context.token_action_map.add("--help", help << 1) # << means assignment
         context.token_action_map.add("--help", help_cmd << cur_command) # << means assignment
