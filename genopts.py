@@ -25,13 +25,40 @@ if False:
 
 ################################################################################
 
+class Block(object):
+    def __init__(self):
+        # type: ()->None
+        # Stores the indendation level
+        self.level = 0 # type: int
+        self.generated_code = [] # type: List[Union[str,Function]]
+
+    def writeline(self, str=""):
+        # type: (str)->None
+        self.generated_code.append(str)
+
+    def add(self, node):
+        # type: (Function) -> None
+        self.generated_code.append(node)
+
+################################################################################
+
+class Function(Block):
+    def __init__(self, parent, name, output, input):
+        # (Block, str, str, List[str]) -> None
+        super(Function, self).__init__()
+        self.name = name
+        self.output = output
+        self.input = input
+
+################################################################################
+
 class GenFile(object):
     def __init__(self, f=sys.stdout):
         # type: (IO[str])->None
         self.f = f
         # Stores the indendation level
         self.level = 0 # type: int
-        self.generated_code = [] # type: List[Union[str,Function]]
+        self.generated_code = [] # type: List[str]
 
     def writeline(self, str=""):
         # type: (str)->None
@@ -44,11 +71,6 @@ class GenFile(object):
         if str == '{':
             self.level = self.level + 1
 
-    def add(self, node):
-        # type: (Function) -> None
-        node.level = 1
-        self.generated_code.append(node)
-
     def flush(self):
         # type: () -> None
         for l in self.generated_code:
@@ -59,15 +81,6 @@ class GenFile(object):
                 print('{', file=self.f)
                 l.flush()
                 print('}', file=self.f)
-
-class Function(GenFile):
-    def __init__(self, parent, name, output, input):
-        # (GenFile, str, str, List[str]) -> None
-        super(Function, self).__init__(parent.f)
-        self.name = name
-        self.output = output
-        self.input = input
-        self.level = 1
 
 ################################################################################
 
@@ -141,7 +154,7 @@ class GenerateMXValidatorVisitor(Visitor):
     Visitor to generate code for validation of multual exclusions.
     """
     def __init__(self, gf):
-        # type: (GenFile)->None
+        # type: (Block) -> None
         self.cmds = [] # type: List[OptionWithArg]
         self.gf = gf
 
@@ -197,7 +210,7 @@ def join_enum(list, conjunction):
     return ", ".join(list[:-1]) + ", " + conjunction + " " + list[-1]
 
 def write_command_validation(gf, command_index_map, parent_map, option_with_args):
-    # type: (GenFile, CommandIndexMap, ParentMap, List[OptionWithArg]) -> None
+    # type: (Block, CommandIndexMap, ParentMap, List[OptionWithArg]) -> None
     for n in option_with_args:
         name = makename(n)
         cur_command_name = name + "_cmd"
@@ -662,6 +675,11 @@ class Backend(object):
         #type: (GenFile, Variables) -> None
         pass
 
+    def write_block(self, gf, block):
+        # type: (GenFile, Block) -> None
+        """Write the given block and its possible descendents to the file"""
+        pass
+
     def write_multiline_comment(self, gf, comment):
         # type: (GenFile, str) -> None
         pass
@@ -686,6 +704,23 @@ class CBackend(Backend):
                 space = ''
             gf.writeline("{0}{1}{2};".format(t, space, k))
         gf.writeline("};")
+
+    def write_block(self, gf, block):
+        # type: (GenFile, Block) -> None
+        """Write the given block and its possible descendents to the file"""
+
+        if isinstance(block, Function):
+            gf.writeline("{0} {1}({2})".format(block.output, block.name, ", ".join(block.input)))
+            gf.writeline('{')
+
+        for l in block.generated_code:
+            if isinstance(l, basestring):
+                gf.writeline(l)
+            elif isinstance(l, Function):
+                self.write_block(gf, l)
+
+        if isinstance(block, Function):
+            gf.writeline('}')
 
     def write_multiline_comment(self, gf, comment):
         # type: (GenFile, str) -> None
@@ -817,7 +852,7 @@ def genopts(patterns):
         vc.writeline("}")
 
     vc.writeline("return 1;")
-    gf.add(vc)
+    backend.write_block(gf, vc)
 
     gf.writeline()
     gf.writeline("/**")
