@@ -380,7 +380,7 @@ class TokenActionMap:
             self.token_requires_arg.add(token)
 
     def write(self, gf):
-        # type: (GenFile) -> None
+        # type: (Block) -> None
         sorted_tokens = sorted([t for t in self.token_action_map])
         first = True
         for token in sorted_tokens:
@@ -428,7 +428,7 @@ class PositionalActionMap:
         self.last_is_variadic = variadic
 
     def write(self, gf, first=False):
-        # type: (GenFile, bool) -> None
+        # type: (Block, bool) -> None
         for pos, cmd_maps in enumerate(self.action_map):
             for cmd_idx in cmd_maps:
                 if first:
@@ -875,25 +875,31 @@ def genopts(patterns):
     # Generate a function that parses the command line and populates
     # the struct cli. It does not yet make verification
     gf.writeline()
-    gf.writeline("static int parse_cli_simple(int argc, char *argv[], struct cli *cli, struct cli_aux *aux)")
-    gf.writeline("{")
-    gf.writeline("int i;")
-    gf.writeline("int cur_command = -1;")
-    gf.writeline("int cur_position = 0;")
-    gf.writeline("for (i=0; i < argc; i++)")
-    gf.writeline("{")
 
-    context.token_action_map.write(gf)
-    context.positional_action_map.write(gf)
+    # Construct parse_cli_simple() function
+    pcs = Function(gf,
+        output="static int",
+        name="parse_cli_simple",
+        input=['int argc', 'char *argv[]', 'struct cli *cli', 'struct cli_aux *aux'])
 
-    gf.writeline("else")
-    gf.writeline("{")
-    gf.writeline('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
-    gf.writeline("return 0;")
-    gf.writeline("}")
-    gf.writeline("}")
-    gf.writeline("return 1;")
-    gf.writeline("}")
+    pcs.writeline("int i;")
+    pcs.writeline("int cur_command = -1;")
+    pcs.writeline("int cur_position = 0;")
+    pcs.writeline("for (i=0; i < argc; i++)")
+    pcs.writeline("{")
+
+    context.token_action_map.write(pcs)
+    context.positional_action_map.write(pcs)
+
+    pcs.writeline("else")
+    pcs.writeline("{")
+    pcs.writeline('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
+    pcs.writeline("return 0;")
+    pcs.writeline("}")
+    pcs.writeline("}")
+    pcs.writeline("return 1;")
+    backend.write_block(gf, pcs)
+
     gf.writeline()
 
     gf.writeline("/**")
