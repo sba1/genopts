@@ -26,6 +26,21 @@ if False:
 
 ################################################################################
 
+class Statement(object):
+    def __init__(self):
+        # type: () -> None
+        pass
+
+class DirectStatement(Statement):
+    """A direct statement is a statement that is put literally into the code"""
+    def __init__(self, str):
+        # type: (str) -> None
+        self.str = str
+
+    def __repr__(self):
+        # type: () -> str
+        return self.str
+
 class LValue:
     def __init__(self, name, element):
         # type: (str, Variable) -> None
@@ -76,18 +91,16 @@ class Block(object):
         # type: ()->None
         # Stores the indendation level
         self.level = 0 # type: int
-        self.generated_code = [] # type: List[Union[str,Function]]
-
-    def writeline(self, str=""):
-        # type: (str)->None
-        self.generated_code.append(str)
+        self.generated_code = [] # type: List[Union[Function, Statement]]
 
     def add(self, node):
-        # type: (Function) -> None
+        # type: (Union[str, Function, Statement]) -> None
+        if isinstance(node, basestring):
+            node = DirectStatement(node)
         self.generated_code.append(node)
 
 class Function(Block):
-    def __init__(self, parent, name, output, input):
+    def __init__(self, parent, name, output , input):
         # (Block, str, str, List[str]) -> None
         super(Function, self).__init__()
         self.name = name
@@ -197,10 +210,10 @@ class GenerateMXValidatorVisitor(Visitor):
     """
     Visitor to generate code for validation of multual exclusions.
     """
-    def __init__(self, gf):
+    def __init__(self, b):
         # type: (Block) -> None
         self.cmds = [] # type: List[OptionWithArg]
-        self.gf = gf
+        self.b = b
 
     def enter_optional(self, n):
         # type: (Optional) -> None
@@ -213,11 +226,11 @@ class GenerateMXValidatorVisitor(Visitor):
 
         conds = " + ".join("!!cli->{0}".format(makename(cmd)) for cmd in self.cmds)
         opts = [cmd.command for cmd in self.cmds]
-        self.gf.writeline("if (({0}) > 1)".format(conds))
-        self.gf.writeline("{")
-        self.gf.writeline("fprintf(stderr, \"Only one of {0} may be given\\n\");".format(join_enum(opts, "or")))
-        self.gf.writeline("return 0;")
-        self.gf.writeline("}")
+        self.b.add("if (({0}) > 1)".format(conds))
+        self.b.add("{")
+        self.b.add("fprintf(stderr, \"Only one of {0} may be given\\n\");".format(join_enum(opts, "or")))
+        self.b.add("return 0;")
+        self.b.add("}")
 
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg) -> None
@@ -253,7 +266,7 @@ def join_enum(list, conjunction):
 
     return ", ".join(list[:-1]) + ", " + conjunction + " " + list[-1]
 
-def write_command_validation(gf, command_index_map, parent_map, option_with_args):
+def write_command_validation(b, command_index_map, parent_map, option_with_args):
     # type: (Block, CommandIndexMap, ParentMap, List[OptionWithArg]) -> None
     for n in option_with_args:
         name = makename(n)
@@ -267,11 +280,11 @@ def write_command_validation(gf, command_index_map, parent_map, option_with_args
         valid_commands = ['\\"' + vc + '\\"' for vc in parent_names]
         valid_commands_text = join_enum(sorted(set(valid_commands)), "and") + " command"
 
-        gf.writeline("if (aux->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
-        gf.writeline("{")
-        gf.writeline("fprintf(stderr,\"Option {0} may be given only for the {1}\\n\");".format(n.command, valid_commands_text))
-        gf.writeline("return 0;")
-        gf.writeline("}")
+        b.add("if (aux->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
+        b.add("{")
+        b.add("fprintf(stderr,\"Option {0} may be given only for the {1}\\n\");".format(n.command, valid_commands_text))
+        b.add("return 0;")
+        b.add("}")
 
 ################################################################################
 
@@ -423,7 +436,7 @@ class TokenActionMap:
         if requires_arg:
             self.token_requires_arg.add(token)
 
-    def write(self, gf):
+    def write(self, b):
         # type: (Block) -> None
         sorted_tokens = sorted([t for t in self.token_action_map])
         first = True
@@ -435,14 +448,14 @@ class TokenActionMap:
                 el = 'else '
             if token in self.token_requires_arg:
                 token_len = len(token)
-                gf.writeline('{0}if (!strncmp("{1}", argv[i], {2}) && (argv[i][{2}]==\'=\' || !argv[i][{2}]))'.format(el, token, token_len - 1))
+                b.add('{0}if (!strncmp("{1}", argv[i], {2}) && (argv[i][{2}]==\'=\' || !argv[i][{2}]))'.format(el, token, token_len - 1))
             else:
-                gf.writeline('{0}if (!strcmp("{1}", argv[i]))'.format(el, token))
+                b.add('{0}if (!strcmp("{1}", argv[i]))'.format(el, token))
 
-            gf.writeline("{")
+            b.add("{")
             for a in self.token_action_map[token]:
-                gf.writeline(a)
-            gf.writeline("}")
+                b.add(a)
+            b.add("}")
 
 class PositionalActionMap:
     """
@@ -471,7 +484,7 @@ class PositionalActionMap:
         self.action_map[pos][cmd_idx].append(action)
         self.last_is_variadic = variadic
 
-    def write(self, gf, first=False):
+    def write(self, b, first=False):
         # type: (Block, bool) -> None
         for pos, cmd_maps in enumerate(self.action_map):
             for cmd_idx in cmd_maps:
@@ -480,12 +493,12 @@ class PositionalActionMap:
                     first = False
                 else:
                     el = 'else '
-                gf.writeline('{0}if (cur_position == {1} && cur_command == {2})'.format(el, pos, cmd_idx))
+                b.add('{0}if (cur_position == {1} && cur_command == {2})'.format(el, pos, cmd_idx))
 
-                gf.writeline("{")
+                b.add("{")
                 for a in cmd_maps[cmd_idx]:
-                    gf.writeline(a)
-                gf.writeline("}")
+                    b.add(a)
+                b.add("}")
 
 class GeneratorContext:
     """
@@ -713,8 +726,8 @@ class CBackend(Backend):
             gf.writeline('{')
 
         for l in block.generated_code:
-            if isinstance(l, basestring):
-                gf.writeline(l)
+            if isinstance(l, Statement):
+                gf.writeline(repr(l)) # FIXME: This should involve the backend
             elif isinstance(l, Function):
                 self.write_block(gf, l)
 
@@ -781,10 +794,10 @@ def genopts(patterns):
         output="static int",
         name="validate_cli",
         input=['struct cli *cli', 'struct cli_aux *aux'])
-    vc.writeline("if (cli->help)")
-    vc.writeline("{")
-    vc.writeline("return 1;")
-    vc.writeline("}")
+    vc.add("if (cli->help)")
+    vc.add("{")
+    vc.add("return 1;")
+    vc.add("}")
     write_command_validation(vc, context.command_index_map, context.parent_map, option_with_args)
     navigate(template, GenerateMXValidatorVisitor(vc))
 
@@ -808,50 +821,50 @@ def genopts(patterns):
         conds = [] # type: List[str]
         for command in commands[0]:
             conds.append("cli->{0}".format(makename(command)))
-        vc.writeline("{0} ({1})".format("if" if first else "else if", " && ".join(conds)))
-        vc.writeline("{")
+        vc.add("{0} ({1})".format("if" if first else "else if", " && ".join(conds)))
+        vc.add("{")
 
         all_args = commands[1] # type: List[Arg]
         optional_args = commands[2] # type: Set[str]
 
         # FIXME: Generalize
         if not any(a.variadic for a in all_args) and len(all_args) == 2 and len(optional_args) == 1 and all_args[0].command in optional_args:
-            vc.writeline("if (aux->positional{0} != NULL)".format(1))
-            vc.writeline("{")
+            vc.add("if (aux->positional{0} != NULL)".format(1))
+            vc.add("{")
             for pos, arg in enumerate(commands[1]):
-                vc.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
-            vc.writeline("}")
-            vc.writeline("else")
-            vc.writeline("{")
-            vc.writeline("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
-            vc.writeline("}")
+                vc.add("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
+            vc.add("}")
+            vc.add("else")
+            vc.add("{")
+            vc.add("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
+            vc.add("}")
         else:
             # Resolve positional arguments
             for pos, arg in enumerate(commands[1]):
                 if arg.variadic:
-                    vc.writeline("cli->{0}_count = aux->variadic_argc;".format(makecname(arg.command)))
-                    vc.writeline("cli->{0} = aux->variadic_argv;".format(makecname(arg.command)))
+                    vc.add("cli->{0}_count = aux->variadic_argc;".format(makecname(arg.command)))
+                    vc.add("cli->{0} = aux->variadic_argv;".format(makecname(arg.command)))
                 else:
-                    vc.writeline("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
+                    vc.add("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
 
         for a in all_args:
             if a.command not in optional_args:
-                vc.writeline("if (!cli->{0})".format(makecname(a.command)))
-                vc.writeline("{")
-                vc.writeline("fprintf(stderr, \"Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command))
-                vc.writeline("return 0;")
-                vc.writeline("}")
+                vc.add("if (!cli->{0})".format(makecname(a.command)))
+                vc.add("{")
+                vc.add("fprintf(stderr, \"Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command))
+                vc.add("return 0;")
+                vc.add("}")
 
-        vc.writeline("}")
+        vc.add("}")
         first = False
     if not first:
-        vc.writeline("else")
-        vc.writeline("{")
-        vc.writeline('fprintf(stderr,"Please specify a proper command. Use --help for usage.\\n");')
-        vc.writeline("return 0;")
-        vc.writeline("}")
+        vc.add("else")
+        vc.add("{")
+        vc.add('fprintf(stderr,"Please specify a proper command. Use --help for usage.\\n");')
+        vc.add("return 0;")
+        vc.add("}")
 
-    vc.writeline("return 1;")
+    vc.add("return 1;")
     backend.write_block(gf, vc)
 
     gf.writeline()
@@ -882,22 +895,22 @@ def genopts(patterns):
         name="parse_cli_simple",
         input=['int argc', 'char *argv[]', 'struct cli *cli', 'struct cli_aux *aux'])
 
-    pcs.writeline("int i;")
-    pcs.writeline("int cur_command = -1;")
-    pcs.writeline("int cur_position = 0;")
-    pcs.writeline("for (i=0; i < argc; i++)")
-    pcs.writeline("{")
+    pcs.add("int i;")
+    pcs.add("int cur_command = -1;")
+    pcs.add("int cur_position = 0;")
+    pcs.add("for (i=0; i < argc; i++)")
+    pcs.add("{")
 
     context.token_action_map.write(pcs)
     context.positional_action_map.write(pcs)
 
-    pcs.writeline("else")
-    pcs.writeline("{")
-    pcs.writeline('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
-    pcs.writeline("return 0;")
-    pcs.writeline("}")
-    pcs.writeline("}")
-    pcs.writeline("return 1;")
+    pcs.add("else")
+    pcs.add("{")
+    pcs.add('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
+    pcs.add("return 0;")
+    pcs.add("}")
+    pcs.add("}")
+    pcs.add("return 1;")
     backend.write_block(gf, pcs)
 
     gf.writeline()
