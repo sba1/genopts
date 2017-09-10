@@ -26,6 +26,51 @@ if False:
 
 ################################################################################
 
+class LValue:
+    def __init__(self, name, element):
+        # type: (str, Variable) -> None
+        self.name = name
+        self.element = element
+
+    def __lshift__(self, other):
+        # type: (Union[Variable,int]) -> Assignment
+        if isinstance(other, Variable):
+            value = other.name
+        else:
+            value = str(other)
+        return Assignment(self, value)
+
+class Assignment(object):
+    def __init__(self, left, right):
+        # type: (LValue, Any) -> None
+        self.left = left
+        self.right = right
+
+    def __repr__(self):
+        # type: () -> str
+        return self.left.name + "->" + self.left.element.name + " = " + str(self.right)
+
+class Variable:
+    def __init__(self, name, vtype):
+        # type: (str, str) -> None
+        self.name = name
+        self.vtype = vtype
+
+class Variables:
+    """An abstraction of run time variabels needed during parsing."""
+    def __init__(self, name):
+        # type: (str) -> None
+        self.variables = dict() # type: Dict[str, Variable]
+        self.name = name
+
+    def add(self, name, vtype):
+        # type: (str, str) -> None
+        self.variables[name] = Variable(name, vtype)
+
+    def __getitem__(self, key):
+        # type: (str) -> Variable
+        return self.variables[key]
+
 class Block(object):
     def __init__(self):
         # type: ()->None
@@ -40,8 +85,6 @@ class Block(object):
     def add(self, node):
         # type: (Function) -> None
         self.generated_code.append(node)
-
-################################################################################
 
 class Function(Block):
     def __init__(self, parent, name, output, input):
@@ -443,51 +486,6 @@ class PositionalActionMap:
                 for a in cmd_maps[cmd_idx]:
                     gf.writeline(a)
                 gf.writeline("}")
-
-class LValue:
-    def __init__(self, name, element):
-        # type: (str, Variable) -> None
-        self.name = name
-        self.element = element
-
-    def __lshift__(self, other):
-        # type: (Union[Variable,int]) -> Assignment
-        if isinstance(other, Variable):
-            value = other.name
-        else:
-            value = str(other)
-        return Assignment(self, value)
-
-class Assignment(object):
-    def __init__(self, left, right):
-        # type: (LValue, Any) -> None
-        self.left = left
-        self.right = right
-
-    def __repr__(self):
-        # type: () -> str
-        return self.left.name + "->" + self.left.element.name + " = " + str(self.right)
-
-class Variable:
-    def __init__(self, name, vtype):
-        # type: (str, str) -> None
-        self.name = name
-        self.vtype = vtype
-
-class Variables:
-    """An abstraction of run time variabels needed during parsing."""
-    def __init__(self, name):
-        # type: (str) -> None
-        self.variables = dict() # type: Dict[str, Variable]
-        self.name = name
-
-    def add(self, name, vtype):
-        # type: (str, str) -> None
-        self.variables[name] = Variable(name, vtype)
-
-    def __getitem__(self, key):
-        # type: (str) -> Variable
-        return self.variables[key]
 
 class GeneratorContext:
     """
