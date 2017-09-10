@@ -58,14 +58,14 @@ class LValue:
         self.element = element
 
     def __lshift__(self, other):
-        # type: (Union[Variable,int]) -> Assignment
+        # type: (Union[Variable,int]) -> AssignmentStatement
         if isinstance(other, Variable):
             value = other.name
         else:
             value = str(other)
-        return Assignment(self, value)
+        return AssignmentStatement(self, value)
 
-class Assignment(object):
+class AssignmentStatement(object):
     def __init__(self, left, right):
         # type: (LValue, Any) -> None
         self.left = left
@@ -439,10 +439,10 @@ class TokenActionMap:
         return item in self.token_action_map
 
     def add(self, token, action, requires_arg=False):
-        # type: (str, Union[str, Assignment], bool) -> None
+        # type: (str, Union[str, AssignmentStatement], bool) -> None
         if token not in self.token_action_map:
             self.token_action_map[token] = []
-        if isinstance(action, Assignment):
+        if isinstance(action, AssignmentStatement):
             action_str = repr(action) + ";"
         else:
             action_str = action
