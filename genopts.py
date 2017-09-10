@@ -41,6 +41,16 @@ class DirectStatement(Statement):
         # type: () -> str
         return self.st
 
+class ReturnStatement(Statement):
+    """A return statement emits an instruction to exit a function execution"""
+    def __init__(self, val):
+        # type: (int) -> None
+        self.val = val
+
+    def __repr__(self):
+        # type: () -> str
+        return "return {0};".format(self.val)
+
 class LValue:
     def __init__(self, name, element):
         # type: (str, Variable) -> None
@@ -98,6 +108,10 @@ class Block(object):
         if isinstance(node, basestring):
             node = DirectStatement(node)
         self.generated_code.append(node)
+
+    def ret(self, val):
+        # type: (int) -> ReturnStatement
+        self.add(ReturnStatement(val))
 
 class Function(Block):
     def __init__(self, parent, name, output , input):
@@ -796,7 +810,7 @@ def genopts(patterns):
         input=['struct cli *cli', 'struct cli_aux *aux'])
     vc.add("if (cli->help)")
     vc.add("{")
-    vc.add("return 1;")
+    vc.ret(1)
     vc.add("}")
     write_command_validation(vc, context.command_index_map, context.parent_map, option_with_args)
     navigate(template, GenerateMXValidatorVisitor(vc))
@@ -852,7 +866,7 @@ def genopts(patterns):
                 vc.add("if (!cli->{0})".format(makecname(a.command)))
                 vc.add("{")
                 vc.add("fprintf(stderr, \"Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command))
-                vc.add("return 0;")
+                vc.ret(0)
                 vc.add("}")
 
         vc.add("}")
@@ -861,10 +875,10 @@ def genopts(patterns):
         vc.add("else")
         vc.add("{")
         vc.add('fprintf(stderr,"Please specify a proper command. Use --help for usage.\\n");')
-        vc.add("return 0;")
+        vc.ret(0)
         vc.add("}")
 
-    vc.add("return 1;")
+    vc.ret(1)
     backend.write_block(gf, vc)
 
     gf.writeline()
@@ -907,10 +921,10 @@ def genopts(patterns):
     pcs.add("else")
     pcs.add("{")
     pcs.add('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
-    pcs.add("return 0;")
+    pcs.ret(0)
     pcs.add("}")
     pcs.add("}")
-    pcs.add("return 1;")
+    pcs.ret(1)
     backend.write_block(gf, pcs)
 
     gf.writeline()
