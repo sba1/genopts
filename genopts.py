@@ -110,7 +110,7 @@ class Block(object):
         self.generated_code.append(node)
 
     def ret(self, val):
-        # type: (int) -> ReturnStatement
+        # type: (int) -> None
         self.add(ReturnStatement(val))
 
 class Function(Block):
