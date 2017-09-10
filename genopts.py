@@ -33,13 +33,13 @@ class Statement(object):
 
 class DirectStatement(Statement):
     """A direct statement is a statement that is put literally into the code"""
-    def __init__(self, str):
+    def __init__(self, st):
         # type: (str) -> None
-        self.str = str
+        self.st = st
 
     def __repr__(self):
         # type: () -> str
-        return self.str
+        return self.st
 
 class LValue:
     def __init__(self, name, element):
