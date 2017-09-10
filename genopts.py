@@ -15,6 +15,7 @@ from __future__ import print_function
 
 import collections
 import sys
+import textwrap
 
 from lib.parser import *
 
@@ -725,6 +726,7 @@ class CBackend(Backend):
     def write_multiline_comment(self, gf, comment):
         # type: (GenFile, str) -> None
         """Write a multiline comment to the given file"""
+        comment = textwrap.dedent(comment)
         gf.writeline("/**")
         for l in comment.split("\n"):
             gf.writeline(" * " + l)
