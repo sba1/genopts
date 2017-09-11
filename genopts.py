@@ -145,13 +145,7 @@ class GenFile(object):
     def flush(self):
         # type: () -> None
         for l in self.generated_code:
-            if isinstance(l, basestring):
-                print(l, file=self.f)
-            elif isinstance(l, Function):
-                print("{0} {1}({2})".format(l.output, l.name, ", ".join(l.input), file=self.f))
-                print('{', file=self.f)
-                l.flush()
-                print('}', file=self.f)
+            print(l, file=self.f)
 
 ################################################################################
 
