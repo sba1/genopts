@@ -65,7 +65,7 @@ class LValue:
             value = str(other)
         return AssignmentStatement(self, value)
 
-class AssignmentStatement(object):
+class AssignmentStatement(Statement):
     def __init__(self, left, right):
         # type: (LValue, Any) -> None
         self.left = left
