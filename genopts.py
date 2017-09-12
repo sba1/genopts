@@ -73,7 +73,7 @@ class AssignmentStatement(Statement):
 
     def __repr__(self):
         # type: () -> str
-        return self.left.name + "->" + self.left.element.name + " = " + str(self.right)
+        return self.left.name + "->" + self.left.element.name + " = " + str(self.right) + ";"
 
 class Variable:
     def __init__(self, name, vtype):
@@ -425,7 +425,7 @@ class TokenActionMap:
     """
     def __init__(self):
         # type: () -> None
-        self.token_action_map = dict() # type: Dict[str,List[str]]
+        self.token_action_map = dict() # type: Dict[str,List[Statement]]
         self.token_requires_arg = set() # type: Set[str]
 
     def __contains__(self, item):
@@ -433,14 +433,13 @@ class TokenActionMap:
         return item in self.token_action_map
 
     def add(self, token, action, requires_arg=False):
-        # type: (str, Union[str, AssignmentStatement], bool) -> None
+        # type: (str, Union[str, Statement], bool) -> None
         if token not in self.token_action_map:
             self.token_action_map[token] = []
-        if isinstance(action, AssignmentStatement):
-            action_str = repr(action) + ";"
+        if isinstance(action, basestring):
+            self.token_action_map[token].append(DirectStatement(action))
         else:
-            action_str = action
-        self.token_action_map[token].append(action_str)
+            self.token_action_map[token].append(action)
         if requires_arg:
             self.token_requires_arg.add(token)
 
