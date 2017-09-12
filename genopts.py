@@ -745,7 +745,11 @@ class CBackend(Backend):
         comment = textwrap.dedent(comment)
         gf.writeline("/**")
         for l in comment.split("\n"):
-            gf.writeline(" * " + l)
+            l = l.strip()
+            if len(l) != 0:
+                gf.writeline(" * " + l)
+            else:
+                gf.writeline(" *")
         gf.writeline(" */")
 
 ################################################################################
