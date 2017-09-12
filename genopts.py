@@ -877,11 +877,12 @@ def genopts(patterns):
     backend.write_block(gf, vc)
 
     gf.writeline()
-    gf.writeline("/**")
-    gf.writeline(" * Print usage for the given cli.")
-    gf.writeline(" *")
-    gf.writeline(" * @return 1 if usage has been printed, 0 otherwise.")
-    gf.writeline(" */")
+    backend.write_multiline_comment(gf, """
+        Print usage for the given cli.
+
+        @return 1 if usage has been printed, 0 otherwise.
+        """)
+
     gf.writeline("static int usage_cli(char *cmd, struct cli *cli)")
     gf.writeline("{")
     gf.writeline("if (!cli->help)")
