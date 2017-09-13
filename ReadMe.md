@@ -109,9 +109,11 @@ static int validate_cli(struct cli *cli, struct cli_aux *aux)
 }
 
 /**
+ *
  * Print usage for the given cli.
  *
  * @return 1 if usage has been printed, 0 otherwise.
+ *
  */
 static int usage_cli(char *cmd, struct cli *cli)
 {
