@@ -101,10 +101,10 @@ class Block(object):
         # type: ()->None
         # Stores the indendation level
         self.level = 0 # type: int
-        self.generated_code = [] # type: List[Union[Function, Statement]]
+        self.generated_code = [] # type: List[Union[Function, Block, Statement]]
 
     def add(self, node):
-        # type: (Union[str, Function, Statement]) -> None
+        # type: (Union[str, Function, Block, Statement]) -> None
         if isinstance(node, basestring):
             node = DirectStatement(node)
         self.generated_code.append(node)
@@ -425,7 +425,7 @@ class TokenActionMap:
     """
     def __init__(self):
         # type: () -> None
-        self.token_action_map = dict() # type: Dict[str,List[Statement]]
+        self.token_action_map = dict() # type: Dict[str,Block]
         self.token_requires_arg = set() # type: Set[str]
 
     def __contains__(self, item):
@@ -435,11 +435,8 @@ class TokenActionMap:
     def add(self, token, action, requires_arg=False):
         # type: (str, Union[str, Statement], bool) -> None
         if token not in self.token_action_map:
-            self.token_action_map[token] = []
-        if isinstance(action, basestring):
-            self.token_action_map[token].append(DirectStatement(action))
-        else:
-            self.token_action_map[token].append(action)
+            self.token_action_map[token] = Block()
+        self.token_action_map[token].add(action)
         if requires_arg:
             self.token_requires_arg.add(token)
 
@@ -459,10 +456,7 @@ class TokenActionMap:
             else:
                 b.add('{0}if (!strcmp("{1}", argv[i]))'.format(el, token))
 
-            b.add("{")
-            for a in self.token_action_map[token]:
-                b.add(a)
-            b.add("}")
+            b.add(self.token_action_map[token])
 
 class PositionalActionMap:
     """
@@ -731,14 +725,18 @@ class CBackend(Backend):
         if isinstance(block, Function):
             gf.writeline("{0} {1}({2})".format(block.output, block.name, ", ".join(block.input)))
             gf.writeline('{')
+        elif isinstance(block, Block):
+            gf.writeline('{')
 
         for l in block.generated_code:
             if isinstance(l, Statement):
                 gf.writeline(repr(l)) # FIXME: This should involve the backend
+            elif isinstance(l, Block):
+                self.write_block(gf, l)
             elif isinstance(l, Function):
                 self.write_block(gf, l)
 
-        if isinstance(block, Function):
+        if isinstance(block, Function) or isinstance(block, Block):
             gf.writeline('}')
 
     def write_multiline_comment(self, gf, comment):
