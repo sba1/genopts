@@ -2,6 +2,7 @@ language: python
 python: "2.7"
 cache: pip
 install:
+ - apt-get install python3-pip
  - travis_retry python3 -m pip install -U mypy
 script:
  - make type-check
