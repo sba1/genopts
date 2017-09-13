@@ -3,7 +3,7 @@ python: "2.7"
 install:
  - wget https://bootstrap.pypa.io/get-pip.py
  - sudo python3 get-pip.py
- - travis_retry python3 -m pip install -U mypy
+ - travis_retry sudo python3 -m pip install -U mypy
 script:
  - make type-check
  - make check
