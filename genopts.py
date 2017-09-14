@@ -464,11 +464,11 @@ class PositionalActionMap:
     """
     def __init__(self):
         # type: () -> None
-        self.action_map = [] # type: List[Dict[int,List[str]]]
+        self.action_map = [] # type: List[Dict[int,Block]]
         self.last_is_variadic = False
 
     def add(self, pos, cmd_idx, action, variadic=False):
-        # type: (int, int, str, bool) -> None
+        # type: (int, int, Union[str, Statement], bool) -> None
         if self.last_is_variadic:
             raise RuntimeError("""
                 Adding another positional argument after a variadic one is not supported!
@@ -481,8 +481,8 @@ class PositionalActionMap:
                 """)
 
         if cmd_idx not in self.action_map[pos]:
-            self.action_map[pos][cmd_idx] = []
-        self.action_map[pos][cmd_idx].append(action)
+            self.action_map[pos][cmd_idx] = Block()
+        self.action_map[pos][cmd_idx].add(action)
         self.last_is_variadic = variadic
 
     def write(self, b, first=False):
@@ -496,10 +496,7 @@ class PositionalActionMap:
                     el = 'else '
                 b.add('{0}if (cur_position == {1} && cur_command == {2})'.format(el, pos, cmd_idx))
 
-                b.add("{")
-                for a in cmd_maps[cmd_idx]:
-                    b.add(a)
-                b.add("}")
+                b.add(cmd_maps[cmd_idx])
 
 class GeneratorContext:
     """
