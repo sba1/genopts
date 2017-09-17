@@ -75,6 +75,18 @@ class AssignmentStatement(Statement):
         # type: () -> str
         return self.left.name + "->" + self.left.element.name + " = " + str(self.right) + ";"
 
+class IfStatement(Statement):
+    def __init__(self, cond, then, otherwise=None):
+        # type: (str, str, str) -> None
+        self.cond = cond
+        self.then = Block()
+        self.then.add(then)
+        if otherwise is not None:
+            self.otherwise = Block()
+            self.otherwise.add(otherwise)
+        else:
+            self.otherwise = None # type: Block
+
 class Variable:
     def __init__(self, name, vtype):
         # type: (str, str) -> None
@@ -726,7 +738,13 @@ class CBackend(Backend):
             gf.writeline('{')
 
         for l in block.generated_code:
-            if isinstance(l, Statement):
+            if isinstance(l, IfStatement):
+                gf.writeline('if ({0})'.format(l.cond)) # FIXME: This should involve the backend
+                self.write_block(gf, l.then)
+                if l.otherwise is not None:
+                    gf.writeline('else')
+                    self.write_block(gf, l.otherwise)
+            elif isinstance(l, Statement):
                 gf.writeline(repr(l)) # FIXME: This should involve the backend
             elif isinstance(l, Block):
                 self.write_block(gf, l)
@@ -953,10 +971,7 @@ def genopts(patterns):
     pc.ret(0);
     pc.add("}")
     pc.add("}")
-    pc.add("if (opts & POF_USAGE)")
-    pc.add("{")
-    pc.add("return !usage_cli(cmd, cli);")
-    pc.add("}")
+    pc.add(IfStatement(cond="opts & POF_USAGE",then="return !usage_cli(cmd, cli);"))
     pc.ret(1)
     backend.write_block(gf, pc)
 
