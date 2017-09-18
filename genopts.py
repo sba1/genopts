@@ -898,17 +898,20 @@ def genopts(patterns):
         @return 1 if usage has been printed, 0 otherwise.
         """)
 
-    gf.writeline("static int usage_cli(char *cmd, struct cli *cli)")
-    gf.writeline("{")
-    gf.writeline("if (!cli->help)")
-    gf.writeline("{")
-    gf.writeline("return 0;")
-    gf.writeline("}")
-    gf.writeline('fprintf(stderr, "usage: %s <command> [<options>]\\n", cmd);'.format(patterns[0].strip()))
+    uc = Function(gf,
+        output="static int",
+        name = "usage_cli",
+        input = ['char *cmd', 'struct cli *cli'])
+
+    uc.add("if (!cli->help)")
+    uc.add("{")
+    uc.ret(0)
+    uc.add("}")
+    uc.add('fprintf(stderr, "usage: %s <command> [<options>]\\n", cmd);'.format(patterns[0].strip()))
     for pattern in sorted(patterns):
-        gf.writeline('fprintf(stderr, "{0}\\n");'.format(pattern.strip()))
-    gf.writeline("return 1;")
-    gf.writeline("}")
+        uc.add('fprintf(stderr, "{0}\\n");'.format(pattern.strip()))
+    uc.ret(1)
+    backend.write_block(gf, uc)
 
     # Generate a function that parses the command line and populates
     # the struct cli. It does not yet make verification
