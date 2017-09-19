@@ -943,15 +943,15 @@ def genopts(patterns):
 
     gf.writeline()
 
-    gf.writeline("/**")
-    gf.writeline(" * Parse the given arguments and fill the struct cli accordingly.")
-    gf.writeline(" *")
-    gf.writeline(" * @param argc as in main()")
-    gf.writeline(" * @param argv as in main()")
-    gf.writeline(" * @param cli the filled struct")
-    gf.writeline(" * @param opts some options to modify the behaviour of the function.")
-    gf.writeline(" * @return 1 if parsing was successful, 0 otherwise.")
-    gf.writeline(" */")
+    backend.write_multiline_comment(gf, """
+        Parse the given arguments and fill the struct cli accordingly.
+
+        @param argc as in main()
+        @param argv as in main()
+        @param cli the filled struct
+        @param opts some options to modify the behaviour of the function.
+        @return 1 if parsing was successful, 0 otherwise.
+        """)
 
     pc = Function(gf,
         output="static int",
