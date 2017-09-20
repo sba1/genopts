@@ -741,7 +741,7 @@ class CBackend(Backend):
             if isinstance(l, IfStatement):
                 gf.writeline('if ({0})'.format(l.cond)) # FIXME: This should involve the backend
                 self.write_block(gf, l.then)
-                if l.otherwise is not None:
+                if l.otherwise is not None and len(l.otherwise.generated_code) != 0:
                     gf.writeline('else')
                     self.write_block(gf, l.otherwise)
             elif isinstance(l, Statement):
