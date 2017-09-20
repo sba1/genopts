@@ -77,15 +77,10 @@ class AssignmentStatement(Statement):
 
 class IfStatement(Statement):
     def __init__(self, cond, then, otherwise=None):
-        # type: (str, str, str) -> None
+        # type: (str, Block, Block) -> None
         self.cond = cond
-        self.then = Block()
-        self.then.add(then)
-        if otherwise is not None:
-            self.otherwise = Block()
-            self.otherwise.add(otherwise)
-        else:
-            self.otherwise = None # type: Block
+        self.then = then
+        self.otherwise = otherwise
 
 class Variable:
     def __init__(self, name, vtype):
@@ -124,6 +119,28 @@ class Block(object):
     def ret(self, val):
         # type: (int) -> None
         self.add(ReturnStatement(val))
+
+    def iff(self, cond):
+        # type: (str) -> ThenBlock
+        otherwise = Block()
+        then = ThenBlock(otherwise)
+        if_then_else = IfStatement(cond, then, otherwise)
+        self.add(if_then_else)
+        return then
+
+class ThenBlock(Block):
+    def __init__(self, otherwise_block):
+        # type: (Block) -> None
+        super(ThenBlock, self).__init__()
+        self.otherwise_block = otherwise_block
+
+    def then(self):
+        # type: () -> Block
+        return self
+
+    def otherwise(self):
+        # type: () -> Block
+        return self.otherwise_block
 
 class Function(Block):
     def __init__(self, parent, name, output , input):
@@ -974,7 +991,7 @@ def genopts(patterns):
     pc.ret(0);
     pc.add("}")
     pc.add("}")
-    pc.add(IfStatement(cond="opts & POF_USAGE",then="return !usage_cli(cmd, cli);"))
+    pc.iff(cond="opts & POF_USAGE").then().add("return !usage_cli(cmd, cli);")
     pc.ret(1)
     backend.write_block(gf, pc)
 
