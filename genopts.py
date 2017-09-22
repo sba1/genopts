@@ -111,10 +111,11 @@ class Block(object):
         self.generated_code = [] # type: List[Union[Function, Block, Statement]]
 
     def add(self, node):
-        # type: (Union[str, Function, Block, Statement]) -> None
+        # type: (Union[str, Function, Block, Statement]) -> Block
         if isinstance(node, basestring):
             node = DirectStatement(node)
         self.generated_code.append(node)
+        return self
 
     def ret(self, val):
         # type: (int) -> None
