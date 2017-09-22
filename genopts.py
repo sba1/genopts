@@ -77,7 +77,7 @@ class AssignmentStatement(Statement):
 
 class IfStatement(Statement):
     def __init__(self, cond, then, otherwise=None):
-        # type: (str, Block, Block) -> None
+        # type: (str, ThenBlock, Block) -> None
         self.cond = cond
         self.then = then
         self.otherwise = otherwise
@@ -122,22 +122,18 @@ class Block(object):
         self.add(ReturnStatement(val))
 
     def iff(self, cond):
-        # type: (str) -> ThenBlock
+        # type: (str) -> IfStatement
         otherwise = Block()
         then = ThenBlock(otherwise)
         if_then_else = IfStatement(cond, then, otherwise)
         self.add(if_then_else)
-        return then
+        return if_then_else
 
 class ThenBlock(Block):
     def __init__(self, otherwise_block):
         # type: (Block) -> None
         super(ThenBlock, self).__init__()
         self.otherwise_block = otherwise_block
-
-    def then(self):
-        # type: () -> Block
-        return self
 
     def otherwise(self):
         # type: () -> Block
@@ -981,10 +977,10 @@ def genopts(patterns):
     pc.add("memset(&aux, 0, sizeof(aux));")
     pc.add("argc--;")
     pc.add("argv++;")
-    pc.iff(cond="!parse_cli_simple(argc, argv, cli, &aux)").then().ret(0)
-    pc.iff(cond="opts & POF_VALIDATE").then(). \
-        iff(cond="!validate_cli(cli, &aux)").then().ret(0)
-    pc.iff(cond="opts & POF_USAGE").then().add("return !usage_cli(cmd, cli);")
+    pc.iff(cond="!parse_cli_simple(argc, argv, cli, &aux)").then.ret(0)
+    pc.iff(cond="opts & POF_VALIDATE").then. \
+        iff(cond="!validate_cli(cli, &aux)").then.ret(0)
+    pc.iff(cond="opts & POF_USAGE").then.add("return !usage_cli(cmd, cli);")
     pc.ret(1)
     backend.write_block(gf, pc)
 
