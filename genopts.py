@@ -85,7 +85,7 @@ class Variable:
 
 class Variables:
     """An abstraction of run time variabels needed during parsing."""
-    def __init__(self, name):
+    def __init__(self, name = None):
         # type: (str) -> None
         self.variables = dict() # type: Dict[str, Variable]
         self.name = name
@@ -104,6 +104,7 @@ class Block(object):
         # Stores the indendation level
         self.level = 0 # type: int
         self.generated_code = [] # type: List[Union[Function, Block, Statement]]
+        self.locals = Variables()
 
     def add(self, node):
         # type: (Union[str, Function, Block, Statement]) -> Block
@@ -746,6 +747,10 @@ class CBackend(Backend):
         elif isinstance(block, Block):
             gf.writeline('{')
 
+        for vname in block.locals.variables:
+            v = block.locals[vname]
+            gf.writeline("{0} {1};".format(v.vtype, vname))
+
         for l in block.generated_code:
             if isinstance(l, IfStatement):
                 gf.writeline('if ({0})'.format(l.cond)) # FIXME: This should involve the backend
@@ -967,7 +972,7 @@ def genopts(patterns):
         name="parse_cli",
         input=['int argc', 'char *argv[]', 'struct cli *cli', 'parse_cli_options_t opts'])
 
-    pc.add("struct cli_aux aux;")
+    pc.locals.add("aux", "struct cli_aux")
     pc.add("char *cmd = argv[0];")
     pc.add("memset(&aux, 0, sizeof(aux));")
     pc.add("argc--;")
