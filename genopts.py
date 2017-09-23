@@ -19,11 +19,6 @@ import textwrap
 
 from lib.parser import *
 
-# For MyPy
-if False:
-    from typing import Any
-
-
 ################################################################################
 
 class Statement(object):
@@ -67,7 +62,7 @@ class LValue:
 
 class AssignmentStatement(Statement):
     def __init__(self, left, right):
-        # type: (LValue, Any) -> None
+        # type: (LValue, str) -> None
         self.left = left
         self.right = right
 
