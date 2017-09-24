@@ -129,8 +129,8 @@ static int usage_cli(char *cmd, struct cli *cli)
 static int parse_cli_simple(int argc, char *argv[], struct cli *cli, struct cli_aux *aux)
 {
 	int i;
-	int cur_command = -1;
 	int cur_position = 0;
+	int cur_command = -1;
 	for (i=0; i < argc; i++)
 	{
 		if (!strcmp("--dry-run", argv[i]))

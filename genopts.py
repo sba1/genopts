@@ -78,10 +78,11 @@ class IfStatement(Statement):
         self.otherwise = otherwise
 
 class Variable:
-    def __init__(self, name, vtype):
-        # type: (str, str) -> None
+    def __init__(self, name, vtype, init = None):
+        # type: (str, str, str) -> None
         self.name = name
         self.vtype = vtype
+        self.init = init
 
 class Variables:
     """An abstraction of run time variabels needed during parsing."""
@@ -90,9 +91,9 @@ class Variables:
         self.variables = dict() # type: Dict[str, Variable]
         self.name = name
 
-    def add(self, name, vtype):
-        # type: (str, str) -> None
-        self.variables[name] = Variable(name, vtype)
+    def add(self, name, vtype, init = None):
+        # type: (str, str, str) -> None
+        self.variables[name] = Variable(name, vtype, init)
 
     def __getitem__(self, key):
         # type: (str) -> Variable
@@ -749,7 +750,10 @@ class CBackend(Backend):
 
         for vname in block.locals.variables:
             v = block.locals[vname]
-            gf.writeline("{0} {1};".format(v.vtype, vname))
+            if v.init is not None:
+                gf.writeline("{0} {1} = {2};".format(v.vtype, vname, v.init))
+            else:
+                gf.writeline("{0} {1};".format(v.vtype, vname))
 
         for l in block.generated_code:
             if isinstance(l, IfStatement):
@@ -937,9 +941,9 @@ def genopts(patterns):
         name="parse_cli_simple",
         input=['int argc', 'char *argv[]', 'struct cli *cli', 'struct cli_aux *aux'])
 
-    pcs.add("int i;")
-    pcs.add("int cur_command = -1;")
-    pcs.add("int cur_position = 0;")
+    pcs.locals.add('i', 'int')
+    pcs.locals.add('cur_command', 'int', '-1')
+    pcs.locals.add('cur_position', 'int', '0')
     pcs.add("for (i=0; i < argc; i++)")
     pcs.add("{")
 
