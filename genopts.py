@@ -529,6 +529,7 @@ class GeneratorContext:
         # type: () -> None
         self.cli_vars = Variables("cli")
         self.aux_vars = Variables("cli_aux")
+        self.cur_command_var = Variable("cur_command", "int", "-1")
         self.parent_map = ParentMap()
         self.command_index_map = CommandIndexMap()
         self.token_action_map = TokenActionMap()
@@ -797,7 +798,7 @@ def genopts(patterns):
     navigate(template, GenerateParserVisitor(context))
 
     if "--help" not in context.token_action_map:
-        cur_command = Variable("cur_command", "int")
+        cur_command = context.cur_command_var
         help = LValue("cli", context.cli_var("help", "int"))
         help_cmd = LValue("aux", context.aux_var("help_cmd", "int"))
 
