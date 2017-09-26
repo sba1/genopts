@@ -95,6 +95,10 @@ class Variables:
         # type: (str, str, str) -> None
         self.variables[name] = Variable(name, vtype, init)
 
+    def add_var(self, var):
+        # type: (Variable) -> None
+        self.variables[var.name] = var
+
     def __getitem__(self, key):
         # type: (str) -> Variable
         return self.variables[key]
@@ -797,8 +801,9 @@ def genopts(patterns):
     context = GeneratorContext()
     navigate(template, GenerateParserVisitor(context))
 
+    cur_command = context.cur_command_var
+
     if "--help" not in context.token_action_map:
-        cur_command = context.cur_command_var
         help = LValue("cli", context.cli_var("help", "int"))
         help_cmd = LValue("aux", context.aux_var("help_cmd", "int"))
 
@@ -943,8 +948,9 @@ def genopts(patterns):
         input=['int argc', 'char *argv[]', 'struct cli *cli', 'struct cli_aux *aux'])
 
     pcs.locals.add('i', 'int')
-    pcs.locals.add('cur_command', 'int', '-1')
+    pcs.locals.add_var(cur_command)
     pcs.locals.add('cur_position', 'int', '0')
+
     pcs.add("for (i=0; i < argc; i++)")
     pcs.add("{")
 
