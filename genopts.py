@@ -987,7 +987,7 @@ def genopts(patterns):
         input=['int argc', 'char *argv[]', 'struct cli *cli', 'parse_cli_options_t opts'])
 
     pc.locals.add("aux", "struct cli_aux")
-    pc.add("char *cmd = argv[0];")
+    pc.locals.add("cmd", "char *", "argv[0]")
     pc.add("memset(&aux, 0, sizeof(aux));")
     pc.add("argc--;")
     pc.add("argv++;")
