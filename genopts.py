@@ -755,10 +755,13 @@ class CBackend(Backend):
 
         for vname in block.locals.variables:
             v = block.locals[vname]
+            vtype = v.vtype
+            if not vtype.endswith('*'):
+                vtype = vtype + " "
             if v.init is not None:
-                gf.writeline("{0} {1} = {2};".format(v.vtype, vname, v.init))
+                gf.writeline("{0}{1} = {2};".format(vtype, vname, v.init))
             else:
-                gf.writeline("{0} {1};".format(v.vtype, vname))
+                gf.writeline("{0}{1};".format(vtype, vname))
 
         for l in block.generated_code:
             if isinstance(l, IfStatement):
