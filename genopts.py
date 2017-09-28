@@ -141,8 +141,8 @@ class ThenBlock(Block):
         return self.otherwise_block
 
 class Function(Block):
-    def __init__(self, parent, name, output , input):
-        # (Block, str, str, List[str]) -> None
+    def __init__(self, name, output , input):
+        # type: (str, str, List[str]) -> None
         super(Function, self).__init__()
         self.name = name
         self.output = output
@@ -845,7 +845,7 @@ def genopts(patterns):
     gf.writeline()
 
     # Generates the validation function
-    vc = Function(gf,
+    vc = Function(
         output="static int",
         name="validate_cli",
         input=['struct cli *cli', 'struct cli_aux *aux'])
@@ -929,7 +929,7 @@ def genopts(patterns):
         @return 1 if usage has been printed, 0 otherwise.
         """)
 
-    uc = Function(gf,
+    uc = Function(
         output="static int",
         name = "usage_cli",
         input = ['char *cmd', 'struct cli *cli'])
@@ -949,7 +949,7 @@ def genopts(patterns):
     gf.writeline()
 
     # Construct parse_cli_simple() function
-    pcs = Function(gf,
+    pcs = Function(
         output="static int",
         name="parse_cli_simple",
         input=['int argc', 'char *argv[]', 'struct cli *cli', 'struct cli_aux *aux'])
@@ -985,7 +985,7 @@ def genopts(patterns):
         @return 1 if parsing was successful, 0 otherwise.
         """)
 
-    pc = Function(gf,
+    pc = Function(
         output="static int",
         name="parse_cli",
         input=['int argc', 'char *argv[]', 'struct cli *cli', 'parse_cli_options_t opts'])
