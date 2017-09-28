@@ -724,6 +724,14 @@ class Backend(object):
 
 ################################################################################
 
+def expand_var(var):
+    # type: (Variable) -> str
+    t = var.vtype
+    space = ' '
+    if t.endswith('*'):
+        space = ''
+    return '{0}{1}{2}'.format(t, space, var.name)
+
 class CBackend(Backend):
     def __init__(self):
         #type: () -> None
@@ -736,11 +744,7 @@ class CBackend(Backend):
         gf.writeline("struct {0}".format(variables.name))
         gf.writeline("{")
         for k in sorted_field_names:
-            t = variables.variables[k].vtype
-            space = ' '
-            if t.endswith('*'):
-                space = ''
-            gf.writeline("{0}{1}{2};".format(t, space, k))
+            gf.writeline("{0};".format(expand_var(variables.variables[k])))
         gf.writeline("};")
 
     def write_block(self, gf, block):
