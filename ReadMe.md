@@ -126,7 +126,7 @@ static int usage_cli(char *cmd, struct cli *cli)
 	return 1;
 }
 
-static int parse_cli_simple(int argc, char *argv[], struct cli *cli, struct cli_aux *aux)
+static int parse_cli_simple(int argc, char **argv, struct cli *cli, struct cli_aux *aux)
 {
 	int i;
 	int cur_position = 0;
@@ -185,7 +185,7 @@ static int parse_cli_simple(int argc, char *argv[], struct cli *cli, struct cli_
  * @return 1 if parsing was successful, 0 otherwise.
  *
  */
-static int parse_cli(int argc, char *argv[], struct cli *cli, parse_cli_options_t opts)
+static int parse_cli(int argc, char **argv, struct cli *cli, parse_cli_options_t opts)
 {
 	struct cli_aux aux;
 	char *cmd = argv[0];

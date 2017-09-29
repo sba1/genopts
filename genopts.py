@@ -84,6 +84,9 @@ class Variable:
         self.vtype = vtype
         self.init = init
 
+# Shortcut
+V = Variable
+
 class Variables:
     """An abstraction of run time variabels needed during parsing."""
     def __init__(self, name = None):
@@ -142,12 +145,11 @@ class ThenBlock(Block):
 
 class Function(Block):
     def __init__(self, name, output , input):
-        # type: (str, str, List[str]) -> None
+        # type: (str, str, List[Variable]) -> None
         super(Function, self).__init__()
         self.name = name
         self.output = output
         self.input = input
-
 ################################################################################
 
 class GenFile(object):
@@ -590,8 +592,8 @@ class GenerateParserVisitor(Visitor):
         field_name = makename(n)
         pos_name = field_name + "_pos"
 
-        self.context.cli_var(field_name, "int")
-        self.context.aux_var(pos_name, "int")
+        field = self.context.cli_var(field_name, "int")
+        pos = self.context.aux_var(pos_name, "int")
 
         if cmd_requires_arg:
             self.context.cli_var(makecname(n.arg), "char *")
@@ -752,7 +754,10 @@ class CBackend(Backend):
         """Write the given block and its possible descendents to the file"""
 
         if isinstance(block, Function):
-            gf.writeline("{0} {1}({2})".format(block.output, block.name, ", ".join(block.input)))
+            inputs = [] # type: List[str]
+            for i in block.input:
+                inputs.append(expand_var(i))
+            gf.writeline("{0} {1}({2})".format(block.output, block.name, ", ".join(inputs)))
             gf.writeline('{')
         elif isinstance(block, Block):
             gf.writeline('{')
@@ -848,7 +853,7 @@ def genopts(patterns):
     vc = Function(
         output="static int",
         name="validate_cli",
-        input=['struct cli *cli', 'struct cli_aux *aux'])
+        input=[V('cli', 'struct cli *'), V('aux', 'struct cli_aux *')])
     vc.add("if (cli->help)")
     vc.add("{")
     vc.ret(1)
@@ -932,7 +937,7 @@ def genopts(patterns):
     uc = Function(
         output="static int",
         name = "usage_cli",
-        input = ['char *cmd', 'struct cli *cli'])
+        input = [V('cmd', 'char *'), V('cli', 'struct cli *')])
 
     uc.add("if (!cli->help)")
     uc.add("{")
@@ -952,7 +957,7 @@ def genopts(patterns):
     pcs = Function(
         output="static int",
         name="parse_cli_simple",
-        input=['int argc', 'char *argv[]', 'struct cli *cli', 'struct cli_aux *aux'])
+        input=[V('argc', 'int'), V('argv', 'char **'), V('cli', 'struct cli *'), V('aux', 'struct cli_aux *')])
 
     pcs.locals.add('i', 'int')
     pcs.locals.add_var(cur_command)
@@ -988,7 +993,7 @@ def genopts(patterns):
     pc = Function(
         output="static int",
         name="parse_cli",
-        input=['int argc', 'char *argv[]', 'struct cli *cli', 'parse_cli_options_t opts'])
+        input=[V('argc', 'int'), V('argv', 'char **'), V('cli', 'struct cli *'), V('opts', 'parse_cli_options_t')])
 
     pc.locals.add("aux", "struct cli_aux")
     pc.locals.add("cmd", "char *", "argv[0]")
