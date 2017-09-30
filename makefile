@@ -8,7 +8,7 @@ all: type-check check test
 
 .PHONY: type-check
 type-check:
-	mypy --py2 *.py
+	mypy --disallow-untyped-defs --py2 *.py
 
 .PHONY: check
 check:
