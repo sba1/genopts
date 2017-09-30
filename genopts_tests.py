@@ -61,6 +61,7 @@ class TestParser(unittest.TestCase):
         self.assertEquals("--no-option", parse_tree.list[1].command)
 
     def test_parse_command_only(self):
+        # type: () -> None
         parse_tree = parse_pattern("cmd")
         self.assertIsNotNone(parse_tree)
         self.assertTrue(isinstance(parse_tree, Pattern))
