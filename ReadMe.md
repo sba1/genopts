@@ -3,7 +3,7 @@
 Introduction
 ============
 
-This is a WIP project for generating command line interface
+This is a simple tool for generating command line interface
 parser, with the current target language being C.
 
 It is mainly developed for [SimpleGit](https://github.com/sba1/simplegit), a
