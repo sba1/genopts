@@ -814,6 +814,7 @@ def genopts(patterns):
     navigate(template, GenerateParserVisitor(context))
 
     cur_command = context.cur_command_var
+    cur_position = V('cur_position', 'int', '0')
 
     if "--help" not in context.token_action_map:
         help = LValue("cli", context.cli_var("help", "int"))
@@ -961,7 +962,7 @@ def genopts(patterns):
 
     pcs.locals.add('i', 'int')
     pcs.locals.add_var(cur_command)
-    pcs.locals.add('cur_position', 'int', '0')
+    pcs.locals.add_var(cur_position)
 
     pcs.add("for (i=0; i < argc; i++)")
     pcs.add("{")
