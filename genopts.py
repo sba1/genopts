@@ -607,8 +607,8 @@ class GenerateParserVisitor(Visitor):
         cur_command_idx = self.command_index_map.map(n)
 
         if cmd not in self.token_action_map:
-            self.token_action_map.add(cmd, "cli->{0} = 1;".format(field_name), cmd_requires_arg)
-            self.token_action_map.add(cmd, "aux->{0} = i;".format(pos_name), cmd_requires_arg)
+            self.token_action_map.add(cmd, LValue('cli', field) << 1, cmd_requires_arg)
+            self.token_action_map.add(cmd, LValue('aux', pos) << V('i', 'int'), cmd_requires_arg)
             self.token_action_map.add(cmd, "cur_command = {0};".format(cur_command_idx), cmd_requires_arg)
 
             if cmd_requires_arg:
