@@ -68,7 +68,10 @@ class AssignmentStatement(Statement):
 
     def __repr__(self):
         # type: () -> str
-        return self.left.name + "->" + self.left.element.name + " = " + str(self.right) + ";"
+        if self.left.name is None:
+            return self.left.element.name + " = " + str(self.right) + ";"
+        else:
+            return self.left.name + "->" + self.left.element.name + " = " + str(self.right) + ";"
 
 class IfStatement(Statement):
     def __init__(self, cond, then, otherwise=None):
