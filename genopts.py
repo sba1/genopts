@@ -612,7 +612,7 @@ class GenerateParserVisitor(Visitor):
         if cmd not in self.token_action_map:
             self.token_action_map.add(cmd, LValue('cli', field) << 1, cmd_requires_arg)
             self.token_action_map.add(cmd, LValue('aux', pos) << V('i', 'int'), cmd_requires_arg)
-            self.token_action_map.add(cmd, "cur_command = {0};".format(cur_command_idx), cmd_requires_arg)
+            self.token_action_map.add(cmd, LValue(None, self.context.cur_command_var) << cur_command_idx, cmd_requires_arg)
 
             if cmd_requires_arg:
                 self.token_action_map.add(cmd, "")
