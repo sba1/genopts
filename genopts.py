@@ -958,11 +958,16 @@ def genopts(patterns):
     # the struct cli. It does not yet make verification
     gf.writeline()
 
+    argc_var = V('argc', 'int')
+    argv_var = V('argv', 'char **')
+    cli_var = V('cli', 'struct cli *')
+    aux_var = V('aux', 'struct cli_aux *')
+
     # Construct parse_cli_simple() function
     pcs = Function(
         output="static int",
         name="parse_cli_simple",
-        input=[V('argc', 'int'), V('argv', 'char **'), V('cli', 'struct cli *'), V('aux', 'struct cli_aux *')])
+        input=[argc_var, argv_var, cli_var, aux_var])
 
     pcs.locals.add('i', 'int')
     pcs.locals.add_var(cur_command)
@@ -998,7 +1003,7 @@ def genopts(patterns):
     pc = Function(
         output="static int",
         name="parse_cli",
-        input=[V('argc', 'int'), V('argv', 'char **'), V('cli', 'struct cli *'), V('opts', 'parse_cli_options_t')])
+        input=[argc_var, argv_var, cli_var, V('opts', 'parse_cli_options_t')])
 
     pc.locals.add("aux", "struct cli_aux")
     pc.locals.add("cmd", "char *", "argv[0]")
