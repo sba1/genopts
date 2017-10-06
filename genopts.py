@@ -62,16 +62,19 @@ class LValue:
 
 class AssignmentStatement(Statement):
     def __init__(self, left, right):
-        # type: (LValue, str) -> None
+        # type: (LValue, Union[str, Expression]) -> None
         self.left = left
-        self.right = right
+        if isinstance(right, Expression):
+            self.right = right
+        else:
+            self.right = DirectExpression(right)
 
     def __repr__(self):
         # type: () -> str
         if self.left.name is None:
-            return self.left.element.name + " = " + str(self.right) + ";"
+            return self.left.element.name + " = " + repr(self.right) + ";"
         else:
-            return self.left.name + "->" + self.left.element.name + " = " + str(self.right) + ";"
+            return self.left.name + "->" + self.left.element.name + " = " + repr(self.right) + ";"
 
 class IfStatement(Statement):
     def __init__(self, cond, then, otherwise=None):
@@ -80,7 +83,19 @@ class IfStatement(Statement):
         self.then = then
         self.otherwise = otherwise
 
-class Variable:
+class Expression:
+    pass
+
+class DirectExpression(Expression):
+    def __init__(self, expr):
+        # type: (str) -> None
+        self.expr = expr
+
+    def __repr__(self):
+        # type: () -> None
+        return self.expr
+
+class Variable(Expression):
     def __init__(self, name, vtype, init = None):
         # type: (str, str, str) -> None
         self.name = name
