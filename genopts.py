@@ -92,7 +92,7 @@ class DirectExpression(Expression):
         self.expr = expr
 
     def __repr__(self):
-        # type: () -> None
+        # type: () -> str
         return self.expr
 
 class Variable(Expression):
