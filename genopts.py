@@ -78,7 +78,7 @@ class AssignmentStatement(Statement):
 
 class IfStatement(Statement):
     def __init__(self, cond, then, otherwise=None):
-        # type: (str, ThenBlock, Block) -> None
+        # type: (Expression, ThenBlock, Block) -> None
         self.cond = cond
         self.then = then
         self.otherwise = otherwise
@@ -144,10 +144,13 @@ class Block(object):
         self.add(ReturnStatement(val))
 
     def iff(self, cond):
-        # type: (str) -> IfStatement
+        # type: (Union[str,Expression]) -> IfStatement
         otherwise = Block()
         then = ThenBlock(otherwise)
-        if_then_else = IfStatement(cond, then, otherwise)
+        if isinstance(cond, Expression):
+            if_then_else = IfStatement(cond, then, otherwise)
+        else:
+            if_then_else = IfStatement(DirectExpression(cond), then, otherwise)
         self.add(if_then_else)
         return if_then_else
 
