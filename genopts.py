@@ -877,10 +877,7 @@ def genopts(patterns):
         output="static int",
         name="validate_cli",
         input=[V('cli', 'struct cli *'), V('aux', 'struct cli_aux *')])
-    vc.add("if (cli->help)")
-    vc.add("{")
-    vc.ret(1)
-    vc.add("}")
+    vc.iff(cond="cli->help").then.ret(1)
     write_command_validation(vc, context.command_index_map, context.parent_map, option_with_args)
     navigate(template, GenerateMXValidatorVisitor(vc))
 
