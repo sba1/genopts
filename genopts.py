@@ -46,6 +46,16 @@ class ReturnStatement(Statement):
         # type: () -> str
         return "return {0};".format(self.val)
 
+class PrintErrorStatement(Statement):
+    """A statement to print an error message"""
+    def __init__(self, msg):
+        # type: (str) -> None
+        self.msg = msg
+
+    def __repr__(self):
+        # type: () -> str
+        return "fprintf(stderr, \"{0}\");".format(self.msg)
+
 class LValue:
     def __init__(self, name, element):
         # type: (str, Variable) -> None
@@ -137,6 +147,11 @@ class Block(object):
         if isinstance(node, basestring):
             node = DirectStatement(node)
         self.generated_code.append(node)
+        return self
+
+    def printerr(self, msg):
+        # type: (str) -> Block
+        self.generated_code.append(PrintErrorStatement(msg))
         return self
 
     def ret(self, val):
@@ -938,7 +953,7 @@ def genopts(patterns):
     if not first:
         vc.add("else")
         vc.add("{")
-        vc.add('fprintf(stderr,"Please specify a proper command. Use --help for usage.\\n");')
+        vc.printerr('Please specify a proper command. Use --help for usage.\\n')
         vc.ret(0)
         vc.add("}")
 
