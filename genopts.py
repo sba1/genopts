@@ -929,11 +929,9 @@ def genopts(patterns):
 
         for a in all_args:
             if a.command not in optional_args:
-                vc.add("if (!cli->{0})".format(makecname(a.command)))
-                vc.add("{")
-                vc.add("fprintf(stderr, \"Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command))
-                vc.ret(0)
-                vc.add("}")
+                vc.iff(cond="!cli->{0}".format(makecname(a.command))).then. \
+                    add("fprintf(stderr, \"Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command)). \
+                    ret(0)
 
         vc.add("}")
         first = False
