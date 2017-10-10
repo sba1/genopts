@@ -77,17 +77,17 @@ static int validate_cli(struct cli *cli, struct cli_aux *aux)
 	}
 	if (aux->fast_cmd != 0 && aux->fast_cmd != 2)
 	{
-		fprintf(stderr,"Option --fast may be given only for the \"sync\" command\n");
+		fprintf(stderr, "Option --fast may be given only for the \"sync\" command\n");
 		return 0;
 	}
 	if (aux->n_cmd != 0 && aux->n_cmd != 2)
 	{
-		fprintf(stderr,"Option -n may be given only for the \"sync\" command\n");
+		fprintf(stderr, "Option -n may be given only for the \"sync\" command\n");
 		return 0;
 	}
 	if (aux->dry_run_cmd != 0 && aux->dry_run_cmd != 2)
 	{
-		fprintf(stderr,"Option --dry-run may be given only for the \"sync\" command\n");
+		fprintf(stderr, "Option --dry-run may be given only for the \"sync\" command\n");
 		return 0;
 	}
 	if ((!!cli->n + !!cli->dry_run) > 1)

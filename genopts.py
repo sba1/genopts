@@ -301,7 +301,7 @@ class GenerateMXValidatorVisitor(Visitor):
         opts = [cmd.command for cmd in self.cmds]
         self.b.add("if (({0}) > 1)".format(conds))
         self.b.add("{")
-        self.b.add("fprintf(stderr, \"Only one of {0} may be given\\n\");".format(join_enum(opts, "or")))
+        self.b.printerr("Only one of {0} may be given\\n".format(join_enum(opts, "or")))
         self.b.add("return 0;")
         self.b.add("}")
 
@@ -355,7 +355,7 @@ def write_command_validation(b, command_index_map, parent_map, option_with_args)
 
         b.add("if (aux->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
         b.add("{")
-        b.add("fprintf(stderr,\"Option {0} may be given only for the {1}\\n\");".format(n.command, valid_commands_text))
+        b.printerr("Option {0} may be given only for the {1}\\n".format(n.command, valid_commands_text))
         b.add("return 0;")
         b.add("}")
 
@@ -945,7 +945,7 @@ def genopts(patterns):
         for a in all_args:
             if a.command not in optional_args:
                 vc.iff(cond="!cli->{0}".format(makecname(a.command))).then. \
-                    add("fprintf(stderr, \"Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command)). \
+                    printerr("Required argument \\\"{0}\\\" is missing. Use --help for usage\\n\");".format(a.command)). \
                     ret(0)
 
         vc.add("}")
