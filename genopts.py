@@ -353,11 +353,9 @@ def write_command_validation(b, command_index_map, parent_map, option_with_args)
         valid_commands = ['\\"' + vc + '\\"' for vc in parent_names]
         valid_commands_text = join_enum(sorted(set(valid_commands)), "and") + " command"
 
-        b.add("if (aux->{0} != 0 && {1})".format(cur_command_name, " && ".join(conds)))
-        b.add("{")
-        b.printerr("Option {0} may be given only for the {1}\\n".format(n.command, valid_commands_text))
-        b.add("return 0;")
-        b.add("}")
+        b.iff(cond="aux->{0} != 0 && {1}".format(cur_command_name, " && ".join(conds))).then. \
+            printerr("Option {0} may be given only for the {1}\\n".format(n.command, valid_commands_text)). \
+            ret(0)
 
 ################################################################################
 
