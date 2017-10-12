@@ -299,11 +299,9 @@ class GenerateMXValidatorVisitor(Visitor):
 
         conds = " + ".join("!!cli->{0}".format(makename(cmd)) for cmd in self.cmds)
         opts = [cmd.command for cmd in self.cmds]
-        self.b.add("if (({0}) > 1)".format(conds))
-        self.b.add("{")
-        self.b.printerr("Only one of {0} may be given\\n".format(join_enum(opts, "or")))
-        self.b.add("return 0;")
-        self.b.add("}")
+        self.b.iff(cond="({0}) > 1".format(conds)).then. \
+            printerr("Only one of {0} may be given\\n".format(join_enum(opts, "or"))). \
+            ret(0)
 
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg) -> None
