@@ -19,6 +19,12 @@ import textwrap
 
 from lib.parser import *
 
+if False: # For MyPy, see https://stackoverflow.com/questions/446052/how-can-i-check-for-python-version-in-a-program-that-uses-new-language-features
+    from typing import TypeVar
+
+    # For generic self inBlock
+    T = TypeVar('T', bound='Block')
+
 ################################################################################
 
 class Statement(object):
@@ -143,20 +149,21 @@ class Block(object):
         self.locals = Variables()
 
     def add(self, node):
-        # type: (Union[str, Function, Block, Statement]) -> Block
+        # type: (T, Union[str, Function, Block, Statement]) -> T
         if isinstance(node, basestring):
             node = DirectStatement(node)
         self.generated_code.append(node)
         return self
 
     def printerr(self, msg):
-        # type: (str) -> Block
+        # type: (T, str) -> T
         self.generated_code.append(PrintErrorStatement(msg))
         return self
 
     def ret(self, val):
-        # type: (int) -> None
+        # type: (T, int) -> T
         self.add(ReturnStatement(val))
+        return self
 
     def iff(self, cond):
         # type: (Union[str,Expression]) -> IfStatement
