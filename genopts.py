@@ -927,15 +927,10 @@ def genopts(patterns):
 
         # FIXME: Generalize
         if not any(a.variadic for a in all_args) and len(all_args) == 2 and len(optional_args) == 1 and all_args[0].command in optional_args:
-            vc.add("if (aux->positional{0} != NULL)".format(1))
-            vc.add("{")
+            then = vc.iff(cond="aux->positional{0} != NULL".format(1)).then
             for pos, arg in enumerate(commands[1]):
-                vc.add("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
-            vc.add("}")
-            vc.add("else")
-            vc.add("{")
-            vc.add("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
-            vc.add("}")
+                then.add("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
+            then.otherwise().add("cli->{0} = aux->positional{1}".format(makecname(all_args[1].command), 0))
         else:
             # Resolve positional arguments
             for pos, arg in enumerate(commands[1]):
