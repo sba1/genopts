@@ -970,10 +970,7 @@ def genopts(patterns):
         name = "usage_cli",
         input = [V('cmd', 'char *'), V('cli', 'struct cli *')])
 
-    uc.add("if (!cli->help)")
-    uc.add("{")
-    uc.ret(0)
-    uc.add("}")
+    uc.iff(cond="!cli->help").then.ret(0)
     uc.add('fprintf(stderr, "usage: %s <command> [<options>]\\n", cmd);'.format(patterns[0].strip()))
     for pattern in sorted(patterns):
         uc.add('fprintf(stderr, "{0}\\n");'.format(pattern.strip()))
