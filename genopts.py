@@ -938,7 +938,7 @@ def genopts(patterns):
             then = vc.iff(cond="aux->positional{0} != NULL".format(1)).then
             for pos, arg in enumerate(commands[1]):
                 then.add("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
-            then.otherwise().add("cli->{0} = aux->positional{1}".format(makecname(all_args[1].command), 0))
+            then.otherwise().add("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
         else:
             # Resolve positional arguments
             for pos, arg in enumerate(commands[1]):
