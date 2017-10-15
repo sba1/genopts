@@ -755,6 +755,10 @@ class Backend(object):
         #type: (GenFile, Variables) -> None
         pass
 
+    def write_header(self, gf):
+        # type: (GenFile) -> None
+        pass
+
     def write_block(self, gf, block):
         # type: (GenFile, Block) -> None
         """Write the given block and its possible descendents to the file"""
@@ -778,6 +782,12 @@ class CBackend(Backend):
     def __init__(self):
         #type: () -> None
         super(CBackend, self).__init__()
+
+    def write_header(self, gf):
+        # type: (GenFile) -> None
+        gf.writeline("#include <stdio.h>")
+        gf.writeline("#include <string.h>")
+        gf.writeline()
 
     def write_variables(self, gf, variables):
         #type: (GenFile, Variables) -> None
@@ -874,9 +884,7 @@ def genopts(patterns):
 
     backend.write_multiline_comment(gf, "Automatically generated file, please don't edit!")
 
-    gf.writeline("#include <stdio.h>")
-    gf.writeline("#include <string.h>")
-    gf.writeline()
+    backend.write_header(gf)
 
     backend.write_variables(gf, context.cli_vars)
     gf.writeline()
