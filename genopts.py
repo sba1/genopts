@@ -111,6 +111,26 @@ class DirectExpression(Expression):
         # type: () -> str
         return self.expr
 
+def make_expr(expr):
+    # type: (Union[str, Expression]) -> Expression
+    if isinstance(expr, Expression):
+        return expr
+    else:
+        return DirectExpression(expr)
+
+class IsFalseExpression(Expression):
+    def __init__(self, expr):
+        # type: (Expression) -> None
+        self.expr = expr
+
+    def __repr__(self):
+        # type: () -> str
+        return "!"  + repr(self.expr)
+
+def IsFalse(expr):
+    # type: (Union[str, Expression]) -> IsFalseExpression
+    return IsFalseExpression(make_expr(expr))
+
 class Variable(Expression):
     def __init__(self, name, vtype, init = None):
         # type: (str, str, str) -> None
@@ -978,7 +998,7 @@ def genopts(patterns):
         name = "usage_cli",
         input = [V('cmd', 'char *'), V('cli', 'struct cli *')])
 
-    uc.iff(cond="!cli->help").then.ret(0)
+    uc.iff(cond=IsFalse("cli->help")).then.ret(0)
     uc.add('fprintf(stderr, "usage: %s <command> [<options>]\\n", cmd);'.format(patterns[0].strip()))
     for pattern in sorted(patterns):
         uc.add('fprintf(stderr, "{0}\\n");'.format(pattern.strip()))
