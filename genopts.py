@@ -118,6 +118,20 @@ def make_expr(expr):
     else:
         return DirectExpression(expr)
 
+class AccessMemberExpression(Expression):
+    def __init__(self, obj, member):
+        # type: (Expression, str) -> None
+        self.obj = obj
+        self.member = member
+
+    def __repr__(self):
+        # type: () -> str
+        return repr(self.obj) + "->" + self.member
+
+def AccessMember(obj, member):
+    # type: (Union[str, Expression], str) -> AccessMemberExpression
+    return AccessMemberExpression(make_expr(obj), member)
+
 class IsFalseExpression(Expression):
     def __init__(self, expr):
         # type: (Expression) -> None
@@ -998,7 +1012,7 @@ def genopts(patterns):
         name = "usage_cli",
         input = [V('cmd', 'char *'), V('cli', 'struct cli *')])
 
-    uc.iff(cond=IsFalse("cli->help")).then.ret(0)
+    uc.iff(cond=IsFalse(AccessMember("cli","help"))).then.ret(0)
     uc.add('fprintf(stderr, "usage: %s <command> [<options>]\\n", cmd);'.format(patterns[0].strip()))
     for pattern in sorted(patterns):
         uc.add('fprintf(stderr, "{0}\\n");'.format(pattern.strip()))
