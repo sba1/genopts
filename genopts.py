@@ -934,7 +934,7 @@ def genopts(patterns):
         # type: (Tuple[List[Command], List[Arg], Set[str]]) -> List[int]
         """
         The function that turns a Tuple into a key that is suitable for sorting.
-        We basicall return the int list mapped from the commands filled up with
+        We basical return the int list mapped from the commands filled up with
         some large numbers because we want to compare shorter patterns later.
         """
         return context.command_index_map.map_list(key[0]) + [999] * max_commands
