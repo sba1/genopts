@@ -69,21 +69,18 @@ class LValue:
         self.element = element
 
     def __lshift__(self, other):
-        # type: (Union[Variable,int]) -> AssignmentStatement
-        if isinstance(other, Variable):
-            value = other.name
+        # type: (Union[Expression,int]) -> AssignmentStatement
+        if isinstance(other, Expression):
+            value = other
         else:
-            value = str(other)
+            value = make_expr(str(other))
         return AssignmentStatement(self, value)
 
 class AssignmentStatement(Statement):
     def __init__(self, left, right):
-        # type: (LValue, Union[str, Expression]) -> None
+        # type: (LValue, Expression) -> None
         self.left = left
-        if isinstance(right, Expression):
-            self.right = right
-        else:
-            self.right = DirectExpression(right)
+        self.right = right
 
     def __repr__(self):
         # type: () -> str
@@ -151,6 +148,10 @@ class Variable(Expression):
         self.name = name
         self.vtype = vtype
         self.init = init
+
+    def __repr__(self):
+         # type: () -> str
+         return self.name
 
 # Shortcut
 V = Variable
