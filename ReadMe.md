@@ -187,9 +187,8 @@ static int parse_cli_simple(int argc, char **argv, struct cli *cli, struct cli_a
  */
 static int parse_cli(int argc, char **argv, struct cli *cli, parse_cli_options_t opts)
 {
-	struct cli_aux aux;
+	struct cli_aux aux = {0};
 	char *cmd = argv[0];
-	memset(&aux, 0, sizeof(aux));
 	argc--;
 	argv++;
 	if (!parse_cli_simple(argc, argv, cli, &aux))

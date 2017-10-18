@@ -164,8 +164,10 @@ class Variables:
         self.name = name
 
     def add(self, name, vtype, init = None):
-        # type: (str, str, str) -> None
-        self.variables[name] = Variable(name, vtype, init)
+        # type: (str, str, str) -> Variable
+        v = Variable(name, vtype, init)
+        self.variables[name] = v
+        return v
 
     def add_var(self, var):
         # type: (Variable) -> None
@@ -1071,9 +1073,8 @@ def genopts(patterns):
         name="parse_cli",
         input=[argc_var, argv_var, cli_var, V('opts', 'parse_cli_options_t')])
 
-    pc.locals.add("aux", "struct cli_aux")
-    pc.locals.add("cmd", "char *", "argv[0]")
-    pc.add("memset(&aux, 0, sizeof(aux));")
+    aux_var = pc.locals.add("aux", "struct cli_aux", "{0}")
+    cmd_var = pc.locals.add("cmd", "char *", "argv[0]")
     pc.add("argc--;")
     pc.add("argv++;")
     pc.iff(cond="!parse_cli_simple(argc, argv, cli, &aux)").then.ret(0)
