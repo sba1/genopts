@@ -146,10 +146,10 @@ def IsFalse(expr):
 
 class Variable(Expression):
     def __init__(self, name, vtype, init = None):
-        # type: (str, str, str) -> None
+        # type: (str, str, Union[Expression,str]) -> None
         self.name = name
         self.vtype = vtype
-        self.init = init
+        self.init = make_expr(init)
 
     def __repr__(self):
          # type: () -> str
@@ -157,6 +157,20 @@ class Variable(Expression):
 
 # Shortcut
 V = Variable
+
+class VectorElementExpression(Expression):
+    def __init__(self, expr, element):
+        # type: (Expression, int) -> None
+        self.expr = expr
+        self.element = element
+
+    def __repr__(self):
+        # type: () -> str
+        return repr(self.expr) + "[" + str(self.element) + "]"
+
+def get(expr, element):
+    # type: (Expression, int) -> VectorElementExpression
+    return VectorElementExpression(expr, element)
 
 class Variables:
     """An abstraction of run time variabels needed during parsing."""
@@ -166,7 +180,7 @@ class Variables:
         self.name = name
 
     def add(self, name, vtype, init = None):
-        # type: (str, str, str) -> Variable
+        # type: (str, str, Union[Expression,str]) -> Variable
         v = Variable(name, vtype, init)
         self.variables[name] = v
         return v
@@ -1076,7 +1090,7 @@ def genopts(patterns):
         input=[argc_var, argv_var, cli_var, V('opts', 'parse_cli_options_t')])
 
     aux_var = pc.locals.add("aux", "struct cli_aux", "{0}")
-    cmd_var = pc.locals.add("cmd", "char *", "argv[0]")
+    cmd_var = pc.locals.add("cmd", "char *", get(argv_var, 0))
     pc.add("argc--;")
     pc.add("argv++;")
     pc.iff(cond="!parse_cli_simple(argc, argv, cli, &aux)").then.ret(0)
