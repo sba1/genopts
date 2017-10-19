@@ -110,6 +110,8 @@ class DirectExpression(Expression):
 
 def make_expr(expr):
     # type: (Union[str, Expression]) -> Expression
+    if expr is None:
+        return None
     if isinstance(expr, Expression):
         return expr
     else:
