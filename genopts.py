@@ -155,6 +155,10 @@ class Variable(Expression):
          # type: () -> str
          return self.name
 
+    def __getitem__(self, key):
+        # type: (int) -> VectorElementExpression
+        return VectorElementExpression(self, key)
+
 # Shortcut
 V = Variable
 
@@ -1090,7 +1094,7 @@ def genopts(patterns):
         input=[argc_var, argv_var, cli_var, V('opts', 'parse_cli_options_t')])
 
     aux_var = pc.locals.add("aux", "struct cli_aux", "{0}")
-    cmd_var = pc.locals.add("cmd", "char *", get(argv_var, 0))
+    cmd_var = pc.locals.add("cmd", "char *", argv_var[0])
     pc.add("argc--;")
     pc.add("argv++;")
     pc.iff(cond="!parse_cli_simple(argc, argv, cli, &aux)").then.ret(0)
