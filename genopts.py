@@ -44,13 +44,13 @@ class DirectStatement(Statement):
 
 class ReturnStatement(Statement):
     """A return statement emits an instruction to exit a function execution"""
-    def __init__(self, val):
-        # type: (int) -> None
-        self.val = val
+    def __init__(self, expr):
+        # type: (Expression) -> None
+        self.expr = expr
 
     def __repr__(self):
         # type: () -> str
-        return "return {0};".format(self.val)
+        return "return {0};".format(repr(self.expr))
 
 class PrintErrorStatement(Statement):
     """A statement to print an error message"""
@@ -217,9 +217,11 @@ class Block(object):
         self.generated_code.append(PrintErrorStatement(msg))
         return self
 
-    def ret(self, val):
-        # type: (T, int) -> T
-        self.add(ReturnStatement(val))
+    def ret(self, expr):
+        # type: (T, Union[int, str, Expression]) -> T
+        if isinstance(expr, int):
+            expr = str(expr) # FIXME: Use an int literal
+        self.add(ReturnStatement(make_expr(expr)))
         return self
 
     def iff(self, cond):
@@ -1101,7 +1103,7 @@ def genopts(patterns):
     pc.iff(cond="!parse_cli_simple(argc, argv, cli, &aux)").then.ret(0)
     pc.iff(cond="opts & POF_VALIDATE").then. \
         iff(cond="!validate_cli(cli, &aux)").then.ret(0)
-    pc.iff(cond="opts & POF_USAGE").then.add("return !usage_cli(cmd, cli);")
+    pc.iff(cond="opts & POF_USAGE").then.ret("!usage_cli(cmd, cli)")
     pc.ret(1)
     backend.write_block(gf, pc)
 
