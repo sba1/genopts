@@ -1088,10 +1088,11 @@ def genopts(patterns):
         @return 1 if parsing was successful, 0 otherwise.
         """)
 
+    opts_var = V('opts', 'parse_cli_options_t')
     pc = Function(
         output="static int",
         name="parse_cli",
-        input=[argc_var, argv_var, cli_var, V('opts', 'parse_cli_options_t')])
+        input=[argc_var, argv_var, cli_var, opts_var])
 
     aux_var = pc.locals.add("aux", "struct cli_aux", "{0}")
     cmd_var = pc.locals.add("cmd", "char *", argv_var[0])
