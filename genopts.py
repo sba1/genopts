@@ -54,13 +54,17 @@ class ReturnStatement(Statement):
 
 class PrintErrorStatement(Statement):
     """A statement to print an error message"""
-    def __init__(self, msg):
-        # type: (str) -> None
+    def __init__(self, msg, *args):
+        # type: (str, Expression) -> None
         self.msg = msg
+        self.args = args
 
     def __repr__(self):
         # type: () -> str
-        return "fprintf(stderr, \"{0}\");".format(self.msg)
+        args = ""
+        if len(self.args):
+            args = ", " + ", ".join([repr(e) for e in self.args])
+        return "fprintf(stderr, \"{0}\"{1});".format(self.msg, args)
 
 class LValue:
     def __init__(self, name, element):
@@ -212,9 +216,9 @@ class Block(object):
         self.generated_code.append(node)
         return self
 
-    def printerr(self, msg):
-        # type: (T, str) -> T
-        self.generated_code.append(PrintErrorStatement(msg))
+    def printerr(self, msg, *args):
+        # type: (T, str, Expression) -> T
+        self.generated_code.append(PrintErrorStatement(msg, *args))
         return self
 
     def ret(self, expr):
