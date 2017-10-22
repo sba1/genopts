@@ -1036,13 +1036,14 @@ def genopts(patterns):
         @return 1 if usage has been printed, 0 otherwise.
         """)
 
+    cmd_var = V('cmd', 'char *')
     uc = Function(
         output="static int",
         name = "usage_cli",
-        input = [V('cmd', 'char *'), V('cli', 'struct cli *')])
+        input = [cmd_var, V('cli', 'struct cli *')])
 
     uc.iff(cond=IsFalse(AccessMember("cli","help"))).then.ret(0)
-    uc.add('fprintf(stderr, "usage: %s <command> [<options>]\\n", cmd);'.format(patterns[0].strip()))
+    uc.printerr("usage: %s <command> [<options>]\\n", cmd_var)
     for pattern in sorted(patterns):
         uc.printerr("{0}\\n".format(pattern.strip()))
     uc.ret(1)
