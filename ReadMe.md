@@ -167,7 +167,7 @@ static int parse_cli_simple(int argc, char **argv, struct cli *cli, struct cli_a
 		}
 		else
 		{
-			fprintf(stderr,"Unknown command or option \"%s\"\n", argv[i]);
+			fprintf(stderr, "Unknown command or option \"%s\"\n", argv[i]);
 			return 0;
 		}
 	}

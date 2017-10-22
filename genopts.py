@@ -1064,7 +1064,7 @@ def genopts(patterns):
         name="parse_cli_simple",
         input=[argc_var, argv_var, cli_var, aux_var])
 
-    pcs.locals.add('i', 'int')
+    i_var = pcs.locals.add('i', 'int')
     pcs.locals.add_var(cur_command)
     pcs.locals.add_var(cur_position)
 
@@ -1076,7 +1076,7 @@ def genopts(patterns):
 
     pcs.add("else")
     pcs.add("{")
-    pcs.add('fprintf(stderr,"Unknown command or option \\"%s\\"\\n\", argv[i]);')
+    pcs.printerr('Unknown command or option \\"%s\\"\\n', argv_var[i_var])
     pcs.ret(0)
     pcs.add("}")
     pcs.add("}")
