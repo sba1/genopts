@@ -1044,7 +1044,7 @@ def genopts(patterns):
     uc.iff(cond=IsFalse(AccessMember("cli","help"))).then.ret(0)
     uc.add('fprintf(stderr, "usage: %s <command> [<options>]\\n", cmd);'.format(patterns[0].strip()))
     for pattern in sorted(patterns):
-        uc.add('fprintf(stderr, "{0}\\n");'.format(pattern.strip()))
+        uc.printerr("{0}\\n".format(pattern.strip()))
     uc.ret(1)
     backend.write_block(gf, uc)
 
