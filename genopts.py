@@ -160,25 +160,25 @@ class Variable(Expression):
          return self.name
 
     def __getitem__(self, key):
-        # type: (int) -> VectorElementExpression
-        return VectorElementExpression(self, key)
+        # type: (Union[int, Expression]) -> VectorElementExpression
+        if isinstance(key, int):
+            expr = DirectExpression(str(key)) # type: Expression
+        else:
+            expr = key;
+        return VectorElementExpression(self, expr)
 
 # Shortcut
 V = Variable
 
 class VectorElementExpression(Expression):
     def __init__(self, expr, element):
-        # type: (Expression, int) -> None
+        # type: (Expression, Expression) -> None
         self.expr = expr
         self.element = element
 
     def __repr__(self):
         # type: () -> str
-        return repr(self.expr) + "[" + str(self.element) + "]"
-
-def get(expr, element):
-    # type: (Expression, int) -> VectorElementExpression
-    return VectorElementExpression(expr, element)
+        return repr(self.expr) + "[" + repr(self.element) + "]"
 
 class Variables:
     """An abstraction of run time variabels needed during parsing."""
