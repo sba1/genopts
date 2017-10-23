@@ -563,13 +563,15 @@ class TokenActionMap:
         # type: (str) -> bool
         return item in self.token_action_map
 
-    def add(self, token, action, requires_arg=False):
-        # type: (str, Union[str, Statement], bool) -> None
+    def add(self, token, action=None, requires_arg=False):
+        # type: (str, Union[str, Statement], bool) -> Block
         if token not in self.token_action_map:
             self.token_action_map[token] = Block()
-        self.token_action_map[token].add(action)
+        if action is not None:
+            self.token_action_map[token].add(action)
         if requires_arg:
             self.token_requires_arg.add(token)
+        return self.token_action_map[token]
 
     def write(self, b):
         # type: (Block) -> None
