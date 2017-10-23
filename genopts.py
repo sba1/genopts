@@ -719,18 +719,12 @@ class GenerateParserVisitor(Visitor):
                 self.token_action_map.add(cmd, "")
                 self.token_action_map.add(cmd, "if (!argv[i][{0}])".format(len(cmd) - 1))
                 self.token_action_map.add(cmd, "{")
-                self.token_action_map.add(cmd, "if (i + 1 < argc)")
-                self.token_action_map.add(cmd, "{")
-
-                self.token_action_map.add(cmd, "cli->{0} = argv[i+1];".format(makecname(n.arg)))
-                self.token_action_map.add(cmd, "i++;")
-
-                self.token_action_map.add(cmd, "}")
-                self.token_action_map.add(cmd, "else")
-                self.token_action_map.add(cmd, "{")
-                self.token_action_map.add(cmd, "fprintf(stderr, \"Argument \\\"{0}\\\" requires a value\\n\");".format(cmd))
-                self.token_action_map.add(cmd, "return 0;")
-                self.token_action_map.add(cmd, "}")
+                self.token_action_map.add(cmd).iff(cond="i + 1 < argc").then. \
+                    add("cli->{0} = argv[i+1];".format(makecname(n.arg))). \
+                    add("i++;").\
+                    otherwise(). \
+                    add("fprintf(stderr, \"Argument \\\"{0}\\\" requires a value\\n\");".format(cmd)). \
+                    ret(0)
                 self.token_action_map.add(cmd, "}")
                 self.token_action_map.add(cmd, "else")
                 self.token_action_map.add(cmd, "{")
