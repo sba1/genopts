@@ -601,7 +601,7 @@ class PositionalActionMap:
         self.last_is_variadic = False
 
     def add(self, pos, cmd_idx, action, variadic=False):
-        # type: (int, int, Union[str, Statement], bool) -> None
+        # type: (int, int, Union[str, Statement], bool) -> Block
         if self.last_is_variadic:
             raise RuntimeError("""
                 Adding another positional argument after a variadic one is not supported!
@@ -617,6 +617,7 @@ class PositionalActionMap:
             self.action_map[pos][cmd_idx] = Block()
         self.action_map[pos][cmd_idx].add(action)
         self.last_is_variadic = variadic
+        return self.action_map[pos][cmd_idx]
 
     def write(self, b, first=False):
         # type: (Block, bool) -> None
