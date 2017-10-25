@@ -256,6 +256,8 @@ class Function(Block):
         self.name = name
         self.output = output
         self.input = input
+        self.description = None # type: str
+
 ################################################################################
 
 class GenFile(object):
@@ -866,6 +868,9 @@ class CBackend(Backend):
 
         if isinstance(block, Function):
             inputs = [] # type: List[str]
+            if block.description is not None:
+                self.write_multiline_comment(gf, block.description)
+
             for i in block.input:
                 inputs.append(expand_var(i))
             gf.writeline("{0} {1}({2})".format(block.output, block.name, ", ".join(inputs)))
@@ -1030,17 +1035,17 @@ def genopts(patterns):
     backend.write_block(gf, vc)
 
     gf.writeline()
-    backend.write_multiline_comment(gf, """
-        Print usage for the given cli.
-
-        @return 1 if usage has been printed, 0 otherwise.
-        """)
 
     cmd_var = V('cmd', 'char *')
     uc = Function(
         output="static int",
         name = "usage_cli",
         input = [cmd_var, V('cli', 'struct cli *')])
+    uc.description = """
+        Print usage for the given cli.
+
+        @return 1 if usage has been printed, 0 otherwise.
+        """
 
     uc.iff(cond=IsFalse(AccessMember("cli","help"))).then.ret(0)
     uc.printerr("usage: %s <command> [<options>]\\n", cmd_var)
@@ -1085,7 +1090,12 @@ def genopts(patterns):
 
     gf.writeline()
 
-    backend.write_multiline_comment(gf, """
+    opts_var = V('opts', 'parse_cli_options_t')
+    pc = Function(
+        output="static int",
+        name="parse_cli",
+        input=[argc_var, argv_var, cli_var, opts_var])
+    pc.description = """
         Parse the given arguments and fill the struct cli accordingly.
 
         @param argc as in main()
@@ -1093,13 +1103,7 @@ def genopts(patterns):
         @param cli the filled struct
         @param opts some options to modify the behaviour of the function.
         @return 1 if parsing was successful, 0 otherwise.
-        """)
-
-    opts_var = V('opts', 'parse_cli_options_t')
-    pc = Function(
-        output="static int",
-        name="parse_cli",
-        input=[argc_var, argv_var, cli_var, opts_var])
+        """
 
     aux_var = pc.locals.add("aux", "struct cli_aux", "{0}")
     cmd_var = pc.locals.add("cmd", "char *", argv_var[0])
