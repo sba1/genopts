@@ -931,8 +931,10 @@ def genopts(patterns):
         help = LValue("cli", context.cli_var("help", "int"))
         help_cmd = LValue("aux", context.aux_var("help_cmd", "int"))
 
-        context.token_action_map.add("--help", help << 1) # << means assignment
-        context.token_action_map.add("--help", help_cmd << cur_command) # << means assignment
+        # << means assignment
+        context.token_action_map.add("--help").\
+            add(help << 1).\
+            add(help_cmd << cur_command)
 
     option_with_args = [] # type: List[OptionWithArg]
     all_commands = [] # type: List[Tuple[List[Command], List[Arg], Set[str]]]
