@@ -920,8 +920,8 @@ class CBackend(Backend):
 
 ################################################################################
 
-def genopts(patterns):
-    # type: (List[str])->None
+def genopts(patterns, backend):
+    # type: (List[str], Backend)->None
     parse_trees = [parse_pattern(p.strip()) for p in patterns]
     template = Template(parse_trees)
     #print(template)
@@ -947,8 +947,6 @@ def genopts(patterns):
     navigate(template, CommandListExtractorVisitor(all_commands))
 
     gf = GenFile()
-
-    backend = CBackend()
 
     backend.write_multiline_comment(gf, "Automatically generated file, please don't edit!")
 
@@ -1124,7 +1122,7 @@ def main():
     lines = sys.stdin.readlines()
     if len(lines) < 1:
         sys.exit("Input must contain at least one line")
-    genopts(lines)
+    genopts(lines, CBackend())
 
 if __name__ == "__main__":
     main()
