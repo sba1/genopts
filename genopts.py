@@ -600,7 +600,7 @@ class PositionalActionMap:
         self.action_map = [] # type: List[Dict[int,Block]]
         self.last_is_variadic = False
 
-    def add(self, pos, cmd_idx, action, variadic=False):
+    def add(self, pos, cmd_idx, action=None, variadic=False):
         # type: (int, int, Union[str, Statement], bool) -> Block
         if self.last_is_variadic:
             raise RuntimeError("""
@@ -615,7 +615,8 @@ class PositionalActionMap:
 
         if cmd_idx not in self.action_map[pos]:
             self.action_map[pos][cmd_idx] = Block()
-        self.action_map[pos][cmd_idx].add(action)
+        if action is not None:
+            self.action_map[pos][cmd_idx].add(action)
         self.last_is_variadic = variadic
         return self.action_map[pos][cmd_idx]
 
