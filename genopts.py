@@ -1144,8 +1144,8 @@ def genopts(patterns, backend):
 
     aux_var = pc.locals.add("aux", "struct cli_aux", "{0}")
     cmd_var = pc.locals.add("cmd", "char *", argv_var[0])
-    pc.add("argc--;")
-    pc.add("argv++;")
+    pc.dec(argc_var)
+    pc.inc(argv_var)
     pc.iff(cond="!parse_cli_simple(argc, argv, cli, &aux)").then.ret(0)
     pc.iff(cond="opts & POF_VALIDATE").then. \
         iff(cond="!validate_cli(cli, &aux)").then.ret(0)
