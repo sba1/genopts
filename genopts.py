@@ -42,6 +42,16 @@ class DirectStatement(Statement):
         # type: () -> str
         return self.st
 
+class ExpressionStatement(Statement):
+    """A statement that consist of an expression"""
+    def __init__(self, expr):
+        # type: (Expression) -> None
+        self.expr = expr
+
+    def __repr__(self):
+        # type: () -> str
+        return repr(self.expr) + ";"
+
 class ReturnStatement(Statement):
     """A return statement emits an instruction to exit a function execution"""
     def __init__(self, expr):
@@ -180,6 +190,25 @@ class VectorElementExpression(Expression):
         # type: () -> str
         return repr(self.expr) + "[" + repr(self.element) + "]"
 
+class PostIncrementExpression(Expression):
+    def __init__(self, expr):
+        # type: (Expression) ->None
+        self.expr = expr
+
+    def __repr__(self):
+        # type: () -> str
+        return repr(self.expr) + "++"
+
+class PostDecrementExpression(Expression):
+    def __init__(self, expr):
+        # type: (Expression) ->None
+        self.expr = expr
+
+    def __repr__(self):
+        # type: () -> str
+        return repr(self.expr) + "--"
+
+
 class Variables:
     """An abstraction of run time variabels needed during parsing."""
     def __init__(self, name = None):
@@ -226,6 +255,16 @@ class Block(object):
         if isinstance(expr, int):
             expr = str(expr) # FIXME: Use an int literal
         self.add(ReturnStatement(make_expr(expr)))
+        return self
+
+    def inc(self, expr):
+        # type: (T, Expression) -> T
+        self.add(ExpressionStatement(PostIncrementExpression(expr)))
+        return self
+
+    def dec(self, expr):
+        # type: (T, Expression) -> T
+        self.add(ExpressionStatement(PostDecrementExpression(expr)))
         return self
 
     def iff(self, cond):
