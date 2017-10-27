@@ -111,7 +111,19 @@ class IfStatement(Statement):
         self.otherwise = otherwise
 
 class Expression:
-    pass
+    def __lshift__(self, other):
+        # type: (Expression) -> AssignmentExpression
+        return AssignmentExpression(self, other)
+
+class AssignmentExpression(Expression):
+    def __init__(self, left, right):
+        # type: (Expression, Expression) -> None
+        self.left = left
+        self.right = right
+
+    def __repr__(self):
+        # type: () -> str
+        return repr(self.left) + " = " + repr(self.right)
 
 class DirectExpression(Expression):
     def __init__(self, expr):
@@ -239,9 +251,11 @@ class Block(object):
         self.locals = Variables()
 
     def add(self, node):
-        # type: (T, Union[str, Function, Block, Statement]) -> T
+        # type: (T, Union[str, Function, Block, Statement, Expression]) -> T
         if isinstance(node, basestring):
             node = DirectStatement(node)
+        elif isinstance(node, Expression):
+            node = ExpressionStatement(node)
         self.generated_code.append(node)
         return self
 
@@ -1042,7 +1056,7 @@ def genopts(patterns, backend):
         if not any(a.variadic for a in all_args) and len(all_args) == 2 and len(optional_args) == 1 and all_args[0].command in optional_args:
             then = vc.iff(cond="aux->positional{0} != NULL".format(1)).then
             for pos, arg in enumerate(commands[1]):
-                then.add("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
+                then.add(make_expr("cli->{0}".format(makecname(arg.command))) << make_expr("aux->positional{1}".format(pos)))
             then.otherwise().add("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
         else:
             # Resolve positional arguments
