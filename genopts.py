@@ -1056,7 +1056,7 @@ def genopts(patterns, backend):
         if not any(a.variadic for a in all_args) and len(all_args) == 2 and len(optional_args) == 1 and all_args[0].command in optional_args:
             then = vc.iff(cond="aux->positional{0} != NULL".format(1)).then
             for pos, arg in enumerate(commands[1]):
-                then.add(make_expr("cli->{0}".format(makecname(arg.command))) << make_expr("aux->positional{1}".format(pos)))
+                then.add(make_expr("cli->{0}".format(makecname(arg.command))) << make_expr("aux->positional{0}".format(pos)))
             then.otherwise().add("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
         else:
             # Resolve positional arguments
