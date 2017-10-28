@@ -754,8 +754,8 @@ class GenerateParserVisitor(Visitor):
         field_name = makename(n)
         pos_name = field_name + "_pos"
 
-        field = self.context.cli_var(field_name, "int")
-        pos = self.context.aux_var(pos_name, "int")
+        field_var = self.context.cli_var(field_name, "int")
+        pos_var = self.context.aux_var(pos_name, "int")
 
         if cmd_requires_arg:
             self.context.cli_var(makecname(n.arg), "char *")
@@ -768,8 +768,8 @@ class GenerateParserVisitor(Visitor):
         cur_command_idx = self.command_index_map.map(n)
 
         if cmd not in self.token_action_map:
-            self.token_action_map.add(cmd, LValue('cli', field) << 1, cmd_requires_arg)
-            self.token_action_map.add(cmd, LValue('aux', pos) << V('i', 'int'), cmd_requires_arg)
+            self.token_action_map.add(cmd, LValue('cli', field_var) << 1, cmd_requires_arg)
+            self.token_action_map.add(cmd, LValue('aux', pos_var) << V('i', 'int'), cmd_requires_arg)
             self.token_action_map.add(cmd, LValue(None, self.context.cur_command_var) << cur_command_idx, cmd_requires_arg)
 
             if cmd_requires_arg:
