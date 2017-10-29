@@ -1018,10 +1018,12 @@ def genopts(patterns, backend):
     gf.writeline()
 
     # Generates the validation function
+    cli_var = V('cli', 'struct cli *')
+    aux_var = V('aux', 'struct cli_aux *')
     vc = Function(
         output="static int",
         name="validate_cli",
-        input=[V('cli', 'struct cli *'), V('aux', 'struct cli_aux *')])
+        input=[cli_var, aux_var])
     vc.iff(cond="cli->help").then.ret(1)
     write_command_validation(vc, context.command_index_map, context.parent_map, option_with_args)
     navigate(template, GenerateMXValidatorVisitor(vc))
@@ -1111,8 +1113,6 @@ def genopts(patterns, backend):
 
     argc_var = V('argc', 'int')
     argv_var = V('argv', 'char **')
-    cli_var = V('cli', 'struct cli *')
-    aux_var = V('aux', 'struct cli_aux *')
 
     # Construct parse_cli_simple() function
     pcs = Function(
