@@ -619,7 +619,7 @@ class TokenActionMap:
         return item in self.token_action_map
 
     def add(self, token, action=None, requires_arg=False):
-        # type: (str, Union[str, Statement], bool) -> Block
+        # type: (str, Union[str, Expression, Statement], bool) -> Block
         if token not in self.token_action_map:
             self.token_action_map[token] = Block()
         if action is not None:
