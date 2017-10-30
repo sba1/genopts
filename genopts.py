@@ -772,14 +772,20 @@ class GenerateParserVisitor(Visitor):
         cmd = n.command
         cmd_requires_arg = n.arg != None
 
+        cli_access = self.context.cli_arg_var.access
+        aux_access = self.context.aux_arg_var.access
+
         field_name = makename(n)
         pos_name = field_name + "_pos"
 
         field_var = self.context.cli_var(field_name, "int")
         pos_var = self.context.aux_var(pos_name, "int")
+        cur_command_var = self.context.cur_command_var
+        arg_var = None # type: Variable
+        i_var = V('i', 'int')
 
         if cmd_requires_arg:
-            self.context.cli_var(makecname(n.arg), "char *")
+            arg_var = self.context.cli_var(makecname(n.arg), "char *")
 
         # Remember parent
         self.parent_map.add_command(n, self.cur_command)
@@ -789,17 +795,17 @@ class GenerateParserVisitor(Visitor):
         cur_command_idx = self.command_index_map.map(n)
 
         if cmd not in self.token_action_map:
-            self.token_action_map.add(cmd, LValue('cli', field_var) << 1, cmd_requires_arg)
-            self.token_action_map.add(cmd, LValue('aux', pos_var) << V('i', 'int'), cmd_requires_arg)
-            self.token_action_map.add(cmd, LValue(None, self.context.cur_command_var) << cur_command_idx, cmd_requires_arg)
+            self.token_action_map.add(cmd, cli_access(field_var) << 1, cmd_requires_arg)
+            self.token_action_map.add(cmd, aux_access(pos_var) << i_var, cmd_requires_arg)
+            self.token_action_map.add(cmd, cur_command_var << cur_command_idx, cmd_requires_arg)
 
             if cmd_requires_arg:
                 self.token_action_map.add(cmd, "")
                 self.token_action_map.add(cmd, "if (!argv[i][{0}])".format(len(cmd) - 1))
                 self.token_action_map.add(cmd, "{")
                 self.token_action_map.add(cmd).iff(cond="i + 1 < argc").then. \
-                    add("cli->{0} = argv[i+1];".format(makecname(n.arg))). \
-                    add("i++;").\
+                    add(cli_access(arg_var) << "argv[i+1]"). \
+                    inc(i_var).\
                     otherwise(). \
                     add("fprintf(stderr, \"Argument \\\"{0}\\\" requires a value\\n\");".format(cmd)). \
                     ret(0)
