@@ -112,8 +112,15 @@ class IfStatement(Statement):
 
 class Expression:
     def __lshift__(self, other):
-        # type: (Expression) -> AssignmentExpression
-        return AssignmentExpression(self, other)
+        # type: (Union[Expression, int]) -> AssignmentExpression
+        if isinstance(other, Expression):
+            return AssignmentExpression(self, other)
+        else:
+            return AssignmentExpression(self, make_expr(str(other)))
+
+    def access(self, other):
+        # type: (Variable) -> AccessMemberExpression
+        return AccessMemberExpression(self, repr(other))
 
 class AssignmentExpression(Expression):
     def __init__(self, left, right):
@@ -717,8 +724,8 @@ class GenerateParserVisitor(Visitor):
     """
     Vistor that generates the parsing of the command line arguments
     """
-    def __init__(self, context):
-        # type: (GeneratorContext) -> None
+    def __init__(self, context, cli_var, aux_var):
+        # type: (GeneratorContext, Variable, Variable) -> None
         """
         Constructs the visitor.
 
@@ -732,6 +739,8 @@ class GenerateParserVisitor(Visitor):
         self.parent_map = context.parent_map
         self.token_action_map = context.token_action_map
         self.positional_action_map = context.positional_action_map
+        self.cli_var = cli_var
+        self.aux_var = aux_var
 
         # Start with 1 in case there options without commands and 0 means not
         # initialized
@@ -980,14 +989,16 @@ def genopts(patterns, backend):
     #print(template)
 
     context = GeneratorContext()
-    navigate(template, GenerateParserVisitor(context))
+    cli_var = V('cli', 'struct cli *')
+    aux_var = V('aux', 'struct cli_aux *')
+    navigate(template, GenerateParserVisitor(context, cli_var, aux_var))
 
     cur_command = context.cur_command_var
     cur_position = context.cur_position_var
 
     if "--help" not in context.token_action_map:
-        help = LValue("cli", context.cli_var("help", "int"))
-        help_cmd = LValue("aux", context.aux_var("help_cmd", "int"))
+        help = cli_var.access(context.cli_var("help", "int"))
+        help_cmd = aux_var.access(context.aux_var("help_cmd", "int"))
 
         # << means assignment
         context.token_action_map.add("--help").\
@@ -1018,8 +1029,6 @@ def genopts(patterns, backend):
     gf.writeline()
 
     # Generates the validation function
-    cli_var = V('cli', 'struct cli *')
-    aux_var = V('aux', 'struct cli_aux *')
     vc = Function(
         output="static int",
         name="validate_cli",

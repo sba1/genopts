@@ -138,7 +138,7 @@ class TestParser(unittest.TestCase):
         template = Template(parse_tree)
         context = GeneratorContext()
         token_action_map = context.token_action_map
-        navigate(template, GenerateParserVisitor(context))
+        navigate(template, GenerateParserVisitor(context,  V('cli', 'struct cli *'), V('aux', 'struct cli_aux *')))
 
         self.assertTrue("--common-option" in token_action_map)
         self.assertTrue("--same" in token_action_map)
