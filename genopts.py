@@ -710,6 +710,10 @@ class GeneratorContext:
         self.token_action_map = TokenActionMap()
         self.positional_action_map = PositionalActionMap()
 
+        # Variables/Parameters used in some functions
+        self.cli_arg_var = V('cli', 'struct cli *')
+        self.aux_arg_var = V('aux', 'struct cli_aux *')
+
     def cli_var(self, name, vtype):
         # type: (str, str) -> Variable
         self.cli_vars.add(name, vtype)
@@ -720,12 +724,20 @@ class GeneratorContext:
         self.aux_vars.add(name, vtype)
         return self.aux_vars[name]
 
+    def cli_access(self, name, type):
+        # type: (str, str) -> Expression
+        return self.cli_arg_var.access(self.cli_var(name, type))
+
+    def aux_access(self, name, type):
+        # type: (str, str) -> Expression
+        return self.aux_arg_var.access(self.aux_var(name, type))
+
 class GenerateParserVisitor(Visitor):
     """
     Vistor that generates the parsing of the command line arguments
     """
-    def __init__(self, context, cli_var, aux_var):
-        # type: (GeneratorContext, Variable, Variable) -> None
+    def __init__(self, context):
+        # type: (GeneratorContext) -> None
         """
         Constructs the visitor.
 
@@ -739,8 +751,8 @@ class GenerateParserVisitor(Visitor):
         self.parent_map = context.parent_map
         self.token_action_map = context.token_action_map
         self.positional_action_map = context.positional_action_map
-        self.cli_var = cli_var
-        self.aux_var = aux_var
+        self.cli_arg_var = context.cli_arg_var
+        self.aux_arg_var = context.aux_arg_var
 
         # Start with 1 in case there options without commands and 0 means not
         # initialized
@@ -989,18 +1001,16 @@ def genopts(patterns, backend):
     #print(template)
 
     context = GeneratorContext()
-    cli_var = V('cli', 'struct cli *')
-    cli_access = cli_var.access
-    aux_var = V('aux', 'struct cli_aux *')
-    aux_access = aux_var.access
-    navigate(template, GenerateParserVisitor(context, cli_var, aux_var))
+    cli_var = context.cli_arg_var
+    aux_var = context.aux_arg_var
+    navigate(template, GenerateParserVisitor(context))
 
     cur_command = context.cur_command_var
     cur_position = context.cur_position_var
 
     if "--help" not in context.token_action_map:
-        help = cli_access(context.cli_var("help", "int"))
-        help_cmd = aux_access(context.aux_var("help_cmd", "int"))
+        help = context.cli_access("help", "int")
+        help_cmd = context.aux_access("help_cmd", "int")
 
         # << means assignment
         context.token_action_map.add("--help").\
