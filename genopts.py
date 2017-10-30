@@ -112,7 +112,7 @@ class IfStatement(Statement):
 
 class Expression:
     def __lshift__(self, other):
-        # type: (Union[Expression, int]) -> AssignmentExpression
+        # type: (Union[Expression, str, int]) -> AssignmentExpression
         if isinstance(other, Expression):
             return AssignmentExpression(self, other)
         else:
