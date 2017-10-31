@@ -807,7 +807,7 @@ class GenerateParserVisitor(Visitor):
                     add(cli_access(arg_var) << "argv[i+1]"). \
                     inc(i_var).\
                     otherwise(). \
-                    add("fprintf(stderr, \"Argument \\\"{0}\\\" requires a value\\n\");".format(cmd)). \
+                    printerr("Argument \\\"{0}\\\" requires a value\\n".format(cmd)). \
                     ret(0)
                 self.token_action_map.add(cmd, "}")
                 self.token_action_map.add(cmd, "else")
