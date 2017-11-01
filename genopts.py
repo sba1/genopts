@@ -766,8 +766,9 @@ class GenerateParserVisitor(Visitor):
     def remember_pos(self, token, field_name):
         # type: (str, str) -> None
         cur_command_name = field_name + "_cmd"
-        cur_command_name_var = self.context.aux_var(cur_command_name, "int")
-        self.token_action_map.add(token, LValue('aux', cur_command_name_var) << self.context.cur_command_var)
+        aux_access = self.context.aux_access
+        cur_command_var = self.context.cur_command_var
+        self.token_action_map.add(token, aux_access(cur_command_name, "int") << cur_command_var)
 
     def visit_command(self, n):
         # type: (Command) -> None
