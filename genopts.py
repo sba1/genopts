@@ -76,33 +76,6 @@ class PrintErrorStatement(Statement):
             args = ", " + ", ".join([repr(e) for e in self.args])
         return "fprintf(stderr, \"{0}\"{1});".format(self.msg, args)
 
-class LValue:
-    def __init__(self, name, element):
-        # type: (str, Variable) -> None
-        self.name = name
-        self.element = element
-
-    def __lshift__(self, other):
-        # type: (Union[Expression,int]) -> AssignmentStatement
-        if isinstance(other, Expression):
-            value = other
-        else:
-            value = make_expr(str(other))
-        return AssignmentStatement(self, value)
-
-class AssignmentStatement(Statement):
-    def __init__(self, left, right):
-        # type: (LValue, Expression) -> None
-        self.left = left
-        self.right = right
-
-    def __repr__(self):
-        # type: () -> str
-        if self.left.name is None:
-            return self.left.element.name + " = " + repr(self.right) + ";"
-        else:
-            return self.left.name + "->" + self.left.element.name + " = " + repr(self.right) + ";"
-
 class IfStatement(Statement):
     def __init__(self, cond, then, otherwise=None):
         # type: (Expression, ThenBlock, Block) -> None
