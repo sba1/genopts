@@ -714,6 +714,8 @@ class GeneratorContext:
         self.cli_arg_var = V('cli', 'struct cli *')
         self.aux_arg_var = V('aux', 'struct cli_aux *')
 
+        self.i_var = V('i', 'int')
+
     def cli_var(self, name, vtype):
         # type: (str, str) -> Variable
         self.cli_vars.add(name, vtype)
@@ -782,7 +784,7 @@ class GenerateParserVisitor(Visitor):
         pos_var = self.context.aux_var(pos_name, "int")
         cur_command_var = self.context.cur_command_var
         arg_var = None # type: Variable
-        i_var = V('i', 'int')
+        i_var = self.context.i_var
 
         if cmd_requires_arg:
             arg_var = self.context.cli_var(makecname(n.arg), "char *")
@@ -1147,7 +1149,8 @@ def genopts(patterns, backend):
         name="parse_cli_simple",
         input=[argc_var, argv_var, cli_var, aux_var])
 
-    i_var = pcs.locals.add('i', 'int')
+    i_var = context.i_var
+    pcs.locals.add_var(i_var)
     pcs.locals.add_var(cur_command)
     pcs.locals.add_var(cur_position)
 
