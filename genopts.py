@@ -887,6 +887,16 @@ class Backend(object):
         # type: (GenFile, str) -> None
         pass
 
+    def argc(self):
+        # type: () -> Expression
+        """Generate an expression to get the argc"""
+        pass
+
+    def argv(self, index):
+        # type: (Union[int, Expression]) -> Expression
+        """Generate an expression to get the index'th argument"""
+        pass
+
 ################################################################################
 
 def expand_var(var):
@@ -973,6 +983,14 @@ class CBackend(Backend):
             else:
                 gf.writeline(" *")
         gf.writeline(" */")
+
+    def argc(self):
+        # type: () -> Expression
+        return V('argc', 'int')
+
+    def argv(self, index):
+        # type: (Union[int, Expression]) -> Expression
+        return V('argv', 'char **')[index]
 
 ################################################################################
 
@@ -1136,7 +1154,7 @@ def genopts(patterns, backend):
 
     pcs.add("else")
     pcs.add("{")
-    pcs.printerr('Unknown command or option \\"%s\\"\\n', argv_var[i_var])
+    pcs.printerr('Unknown command or option \\"%s\\"\\n', backend.argv(i_var))
     pcs.ret(0)
     pcs.add("}")
     pcs.add("}")
