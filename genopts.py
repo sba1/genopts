@@ -115,13 +115,13 @@ class DirectExpression(Expression):
         return self.expr
 
 def make_expr(expr):
-    # type: (Union[str, Expression]) -> Expression
+    # type: (Union[str, int, Expression]) -> Expression
     if expr is None:
         return None
     if isinstance(expr, Expression):
         return expr
     else:
-        return DirectExpression(expr)
+        return DirectExpression(str(expr))
 
 class AccessMemberExpression(Expression):
     def __init__(self, obj, member):
