@@ -88,6 +88,24 @@ class Expression:
         # type: (Union[Expression, str, int]) -> AssignmentExpression
         return AssignmentExpression(self, make_expr(other))
 
+    def __lt__(self, other):
+        # type: (Union[Expression, str, int]) -> CompareExpression
+        return CompareExpression(self, '<', make_expr(other))
+
+    def __gt__(self, other):
+        # type: (Union[Expression, str, int]) -> CompareExpression
+        return CompareExpression(self, '>', make_expr(other))
+
+    # No proper overloading for now
+    def eq(self, other):
+        # type: (Union[Expression, str, int]) -> CompareExpression
+        return CompareExpression(self, '==', make_expr(other))
+
+    # No proper overloading for now
+    def ne(self, other):
+        # type: (Union[Expression, str, int]) -> CompareExpression
+        return CompareExpression(self, '!=', make_expr(other))
+
     def access(self, other):
         # type: (Variable) -> AccessMemberExpression
         return AccessMemberExpression(self, repr(other))
@@ -101,6 +119,17 @@ class AssignmentExpression(Expression):
     def __repr__(self):
         # type: () -> str
         return repr(self.left) + " = " + repr(self.right)
+
+class CompareExpression(Expression):
+    def __init__(self, left, rel, right):
+        # type: (Expression, str, Expression) -> None
+        self.left = left
+        self.rel = rel
+        self.right = right
+
+    def __repr__(self):
+        # type: () -> str
+        return '(' + repr(self.left) + ') ' + self.rel + ' (' + repr(self.right) + ')'
 
 class DirectExpression(Expression):
     def __init__(self, expr):
@@ -399,9 +428,9 @@ class GenerateMXValidatorVisitor(Visitor):
         if len(self.cmds) < 2:
             return
 
-        conds = " + ".join("!!cli->{0}".format(makename(cmd)) for cmd in self.cmds)
+        conds = DirectExpression(" + ".join("!!cli->{0}".format(makename(cmd)) for cmd in self.cmds))
         opts = [cmd.command for cmd in self.cmds]
-        self.b.iff(cond="({0}) > 1".format(conds)).then. \
+        self.b.iff(cond=conds > 1).then. \
             printerr("Only one of {0} may be given\\n".format(join_enum(opts, "or"))). \
             ret(0)
 
