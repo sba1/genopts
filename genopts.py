@@ -89,22 +89,22 @@ class Expression:
         return AssignmentExpression(self, make_expr(other))
 
     def __lt__(self, other):
-        # type: (Union[Expression, str, int]) -> CompareExpression
-        return CompareExpression(self, '<', make_expr(other))
+        # type: (Union[Expression, str, int]) -> BinaryExpression
+        return BinaryExpression(self, '<', make_expr(other))
 
     def __gt__(self, other):
-        # type: (Union[Expression, str, int]) -> CompareExpression
-        return CompareExpression(self, '>', make_expr(other))
+        # type: (Union[Expression, str, int]) -> BinaryExpression
+        return BinaryExpression(self, '>', make_expr(other))
 
     # No proper overloading for now
     def eq(self, other):
-        # type: (Union[Expression, str, int]) -> CompareExpression
-        return CompareExpression(self, '==', make_expr(other))
+        # type: (Union[Expression, str, int]) -> BinaryExpression
+        return BinaryExpression(self, '==', make_expr(other))
 
     # No proper overloading for now
     def ne(self, other):
-        # type: (Union[Expression, str, int]) -> CompareExpression
-        return CompareExpression(self, '!=', make_expr(other))
+        # type: (Union[Expression, str, int]) -> BinaryExpression
+        return BinaryExpression(self, '!=', make_expr(other))
 
     def access(self, other):
         # type: (Variable) -> AccessMemberExpression
@@ -120,7 +120,7 @@ class AssignmentExpression(Expression):
         # type: () -> str
         return repr(self.left) + " = " + repr(self.right)
 
-class CompareExpression(Expression):
+class BinaryExpression(Expression):
     def __init__(self, left, rel, right):
         # type: (Expression, str, Expression) -> None
         self.left = left
