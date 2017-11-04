@@ -430,7 +430,7 @@ class GenerateMXValidatorVisitor(Visitor):
 
         conds = DirectExpression(" + ".join("!!cli->{0}".format(makename(cmd)) for cmd in self.cmds))
         opts = [cmd.command for cmd in self.cmds]
-        self.b.iff(cond=conds > 1).then. \
+        self.b.iff(conds > 1).then. \
             printerr("Only one of {0} may be given\\n".format(join_enum(opts, "or"))). \
             ret(0)
 
