@@ -1028,6 +1028,7 @@ def genopts(patterns, backend):
 
     context = GeneratorContext()
     cli_var = context.cli_arg_var
+    cli_access = context.cli_access
     aux_var = context.aux_arg_var
     navigate(template, GenerateParserVisitor(context))
 
@@ -1147,7 +1148,7 @@ def genopts(patterns, backend):
         @return 1 if usage has been printed, 0 otherwise.
         """
 
-    uc.iff(cond=IsFalse(AccessMember("cli","help"))).then.ret(0)
+    uc.iff(IsFalse(cli_access("help", "int"))).then.ret(0)
     uc.printerr("usage: %s <command> [<options>]\\n", cmd_var)
     for pattern in sorted(patterns):
         uc.printerr("{0}\\n".format(pattern.strip()))
