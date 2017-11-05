@@ -136,7 +136,8 @@ class TestParser(unittest.TestCase):
         parse_tree.append(parse_pattern("[--common-option] cmd1 [--same] [--cmd1-option]"))
         parse_tree.append(parse_pattern("[--common-option] cmd2 [--same] [--cmd2-option]"))
         template = Template(parse_tree)
-        context = GeneratorContext()
+        backend = CBackend()
+        context = GeneratorContext(backend)
         token_action_map = context.token_action_map
         navigate(template, GenerateParserVisitor(context))
 

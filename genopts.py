@@ -706,8 +706,9 @@ class GeneratorContext:
     """
     The context of the parser generator
     """
-    def __init__(self):
-        # type: () -> None
+    def __init__(self, backend):
+        # type: (Backend) -> None
+        self.backend = backend
         self.cli_vars = Variables("cli")
         self.aux_vars = Variables("cli_aux")
         self.cur_command_var = Variable("cur_command", "int", "-1")
@@ -1034,7 +1035,7 @@ def genopts(patterns, backend):
     template = Template(parse_trees)
     #print(template)
 
-    context = GeneratorContext()
+    context = GeneratorContext(backend)
     cli_var = context.cli_arg_var
     cli_access = context.cli_access
     aux_var = context.aux_arg_var
