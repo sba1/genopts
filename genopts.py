@@ -96,6 +96,14 @@ class Expression:
         # type: (Union[Expression, str, int]) -> BinaryExpression
         return BinaryExpression(self, '>', make_expr(other))
 
+    def __add__(self, other):
+        # type: (Union[Expression, str, int]) -> BinaryExpression
+        return BinaryExpression(self, '+', make_expr(other))
+
+    def __sub__(self, other):
+        # type: (Union[Expression, str, int]) -> BinaryExpression
+        return BinaryExpression(self, '+', make_expr(other))
+
     # No proper overloading for now
     def eq(self, other):
         # type: (Union[Expression, str, int]) -> BinaryExpression
