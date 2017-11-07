@@ -806,6 +806,7 @@ class GenerateParserVisitor(Visitor):
         cur_command_idx = self.command_index_map.map(n)
 
         argv = self.context.backend.argv
+        argc = self.context.backend.argc
 
         if cmd not in self.token_action_map:
             self.token_action_map.add(cmd, cli_access(field_var) << 1, cmd_requires_arg)
@@ -816,7 +817,7 @@ class GenerateParserVisitor(Visitor):
                 self.token_action_map.add(cmd, "")
                 self.token_action_map.add(cmd, "if (!argv[i][{0}])".format(len(cmd) - 1))
                 self.token_action_map.add(cmd, "{")
-                self.token_action_map.add(cmd).iff(cond="i + 1 < argc").then. \
+                self.token_action_map.add(cmd).iff(i_var + 1 < argc()).then. \
                     add(cli_access(arg_var) << argv(i_var + 1)). \
                     inc(i_var).\
                     otherwise(). \
