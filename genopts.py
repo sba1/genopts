@@ -793,7 +793,7 @@ class GenerateParserVisitor(Visitor):
         pos_var = self.context.aux_var(pos_name, "int")
         cur_command_var = self.context.cur_command_var
         arg_var = None # type: Variable
-        i_var = self.context.i_var
+        i = self.context.i_var
 
         if cmd_requires_arg:
             arg_var = self.context.cli_var(makecname(n.arg), "char *")
@@ -810,16 +810,16 @@ class GenerateParserVisitor(Visitor):
 
         if cmd not in self.token_action_map:
             self.token_action_map.add(cmd, cli_access(field_var) << 1, cmd_requires_arg)
-            self.token_action_map.add(cmd, aux_access(pos_var) << i_var, cmd_requires_arg)
+            self.token_action_map.add(cmd, aux_access(pos_var) << i, cmd_requires_arg)
             self.token_action_map.add(cmd, cur_command_var << cur_command_idx, cmd_requires_arg)
 
             if cmd_requires_arg:
                 self.token_action_map.add(cmd, "")
                 self.token_action_map.add(cmd, "if (!argv[i][{0}])".format(len(cmd) - 1))
                 self.token_action_map.add(cmd, "{")
-                self.token_action_map.add(cmd).iff(i_var + 1 < argc).then. \
-                    add(cli_access(arg_var) << argv(i_var + 1)). \
-                    inc(i_var).\
+                self.token_action_map.add(cmd).iff(i + 1 < argc).then. \
+                    add(cli_access(arg_var) << argv(i + 1)). \
+                    inc(i).\
                     otherwise(). \
                     printerr("Argument \\\"{0}\\\" requires a value\\n".format(cmd)). \
                     ret(0)
