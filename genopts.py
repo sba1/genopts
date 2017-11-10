@@ -832,6 +832,10 @@ class GenerateParserVisitor(Visitor):
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg) -> None
 
+        cli = self.context.cli_access
+        argv = self.context.backend.argv
+        i = self.context.i_var
+
         # Remember parent
         self.parent_map.add_option(n, self.cur_command)
 
@@ -841,14 +845,14 @@ class GenerateParserVisitor(Visitor):
         if option not in self.token_action_map:
             field_name = makename(n)
             if n.arg == None:
-                self.context.cli_var(field_name, "int")
-                self.token_action_map.add(option, "cli->{0} = 1;".format(field_name))
+                #field_var = self.context.cli_var(field_name, "int")
+                self.token_action_map.add(option, cli(field_name, "int") << 1)
             else:
-                self.context.cli_var(field_name, "char *")
+                field_var = self.context.cli_var(field_name, "char *")
                 field_name = makename(n)
 
                 self.token_action_map.add(option, "if (++i == argc) break;")
-                self.token_action_map.add(option, "cli->{0} = argv[i];".format(field_name))
+                self.token_action_map.add(option, cli(field_name, "char *") << argv(i))
 
             self.remember_pos(option, field_name)
 
