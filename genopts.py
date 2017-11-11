@@ -845,12 +845,8 @@ class GenerateParserVisitor(Visitor):
         if option not in self.token_action_map:
             field_name = makename(n)
             if n.arg == None:
-                #field_var = self.context.cli_var(field_name, "int")
                 self.token_action_map.add(option, cli(field_name, "int") << 1)
             else:
-                field_var = self.context.cli_var(field_name, "char *")
-                field_name = makename(n)
-
                 self.token_action_map.add(option, "if (++i == argc) break;")
                 self.token_action_map.add(option, cli(field_name, "char *") << argv(i))
 
