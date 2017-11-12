@@ -102,7 +102,7 @@ class Expression:
 
     def __sub__(self, other):
         # type: (Union[Expression, str, int]) -> BinaryExpression
-        return BinaryExpression(self, '+', make_expr(other))
+        return BinaryExpression(self, '-', make_expr(other))
 
     # No proper overloading for now
     def eq(self, other):
