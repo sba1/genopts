@@ -162,7 +162,7 @@ static int parse_cli_simple(int argc, char **argv, struct cli *cli, struct cli_a
 		else if (cur_position == 0 && cur_command == 2)
 		{
 			aux->variadic_argv = &argv[i];
-			aux->variadic_argc = argc - i;
+			aux->variadic_argc = (argc) + (i);
 			break;
 		}
 		else

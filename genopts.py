@@ -856,6 +856,11 @@ class GenerateParserVisitor(Visitor):
         # type: (Arg) -> None
         field_name = makecname(n.command)
         cur_command_idx = self.command_index_map.map(self.cur_command)
+
+        aux = self.context.aux_access
+        argc = self.context.backend.argc()
+        i = self.context.i_var
+
         if n.variadic:
             count_field_name = field_name + "_count";
 
@@ -864,13 +869,11 @@ class GenerateParserVisitor(Visitor):
 
             # Use helper fields, the real one will be set in the validation phase
             variadic_field_name = 'variadic_argv'
-            variadic_count_field_name = 'variadic_argc'
 
             self.context.aux_var(variadic_field_name, "char **")
-            self.context.aux_var(variadic_count_field_name, "int")
 
             self.positional_action_map.add(self.cur_position, cur_command_idx, "aux->{0} = &argv[i];".format(variadic_field_name))
-            self.positional_action_map.add(self.cur_position, cur_command_idx, "aux->{0} = argc - i;".format(variadic_count_field_name))
+            self.positional_action_map.add(self.cur_position, cur_command_idx, aux("variadic_argc", "int") << argc - i)
             self.positional_action_map.add(self.cur_position, cur_command_idx, "break;")
         else:
             self.context.cli_var(field_name, "char *")
