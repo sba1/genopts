@@ -859,6 +859,7 @@ class GenerateParserVisitor(Visitor):
 
         aux = self.context.aux_access
         argc = self.context.backend.argc()
+        argv = self.context.backend.argv
         i = self.context.i_var
 
         if n.variadic:
@@ -880,9 +881,8 @@ class GenerateParserVisitor(Visitor):
 
             # Use helper fields, the real one will be set in the validation phase
             positional_field_name = 'positional{0}'.format(self.cur_position)
-            self.context.aux_var(positional_field_name, "char *")
 
-            self.positional_action_map.add(self.cur_position, cur_command_idx, "aux->{0} = argv[i];".format(positional_field_name))
+            self.positional_action_map.add(self.cur_position, cur_command_idx).add(aux(positional_field_name, "char *") << argv(i))
             self.positional_action_map.add(self.cur_position, cur_command_idx).inc(self.context.cur_command_var)
 
             self.cur_position = self.cur_position + 1
