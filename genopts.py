@@ -726,19 +726,21 @@ class GeneratorContext:
 
     def cli_var(self, name, vtype):
         # type: (str, str) -> Variable
-        self.cli_vars.add(name, vtype)
+        if vtype != None:
+            self.cli_vars.add(name, vtype)
         return self.cli_vars[name]
 
     def aux_var(self, name, vtype):
         # type: (str, str) -> Variable
-        self.aux_vars.add(name, vtype)
+        if vtype != None:
+            self.aux_vars.add(name, vtype)
         return self.aux_vars[name]
 
-    def cli_access(self, name, type):
+    def cli_access(self, name, type = None):
         # type: (str, str) -> Expression
         return self.cli_arg_var.access(self.cli_var(name, type))
 
-    def aux_access(self, name, type):
+    def aux_access(self, name, type = None):
         # type: (str, str) -> Expression
         return self.aux_arg_var.access(self.aux_var(name, type))
 
