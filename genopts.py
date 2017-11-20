@@ -1047,14 +1047,15 @@ def genopts(patterns, backend):
     cli_var = context.cli_arg_var
     cli_access = context.cli_access
     aux_var = context.aux_arg_var
+    aux_access = context.aux_access
     navigate(template, GenerateParserVisitor(context))
 
     cur_command = context.cur_command_var
     cur_position = context.cur_position_var
 
     if "--help" not in context.token_action_map:
-        help = context.cli_access("help", "int")
-        help_cmd = context.aux_access("help_cmd", "int")
+        help = cli_access("help", "int")
+        help_cmd = aux_access("help_cmd", "int")
 
         # << means assignment
         context.token_action_map.add("--help").\
