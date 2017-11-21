@@ -1137,7 +1137,7 @@ def genopts(patterns, backend):
 
         for a in all_args:
             if a.command not in optional_args:
-                vc.iff(cond="!cli->{0}".format(makecname(a.command))).then. \
+                vc.iff(IsFalse(cli_access(makecname(a.command)))).then. \
                     printerr("Required argument \\\"{0}\\\" is missing. Use --help for usage\\n".format(a.command)). \
                     ret(0)
 
