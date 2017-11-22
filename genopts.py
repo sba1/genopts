@@ -862,6 +862,7 @@ class GenerateParserVisitor(Visitor):
         aux = self.context.aux_access
         argc = self.context.backend.argc()
         argv = self.context.backend.argv
+        slice = self.context.backend.slice
         i = self.context.i_var
 
         if n.variadic:
@@ -939,6 +940,22 @@ class Backend(object):
         # type: (Union[int, Expression]) -> Expression
         """Generate an expression to get the index'th argument"""
         pass
+
+    def slice(self, expr, start):
+        # type: (Expression, Expression) -> Expression
+        """Generate an expression to get a slice an expression"""
+        pass
+
+################################################################################
+
+class AddressOfExpression(Expression):
+    def __init__(self, expr):
+        # type: (Expression) -> None
+        self.expr = expr
+
+    def __repr__(self):
+        # type: () -> str
+        return "&" + repr(self.expr)
 
 ################################################################################
 
@@ -1034,6 +1051,10 @@ class CBackend(Backend):
     def argv(self, index):
         # type: (Union[int, Expression]) -> Expression
         return V('argv', 'char **')[index]
+
+    def slice(self, expr, start):
+        # type: (Expression, Expression) -> Expression
+        return AddressOfExpression(expr[start])
 
 ################################################################################
 
