@@ -118,6 +118,14 @@ class Expression:
         # type: (Variable) -> AccessMemberExpression
         return AccessMemberExpression(self, repr(other))
 
+    def __getitem__(self, key):
+        # type: (Union[int, Expression]) -> VectorElementExpression
+        if isinstance(key, int):
+            expr = DirectExpression(str(key)) # type: Expression
+        else:
+            expr = key;
+        return VectorElementExpression(self, expr)
+
 class AssignmentExpression(Expression):
     def __init__(self, left, right):
         # type: (Expression, Expression) -> None
@@ -194,14 +202,6 @@ class Variable(Expression):
     def __repr__(self):
          # type: () -> str
          return self.name
-
-    def __getitem__(self, key):
-        # type: (Union[int, Expression]) -> VectorElementExpression
-        if isinstance(key, int):
-            expr = DirectExpression(str(key)) # type: Expression
-        else:
-            expr = key;
-        return VectorElementExpression(self, expr)
 
 # Shortcut
 V = Variable
