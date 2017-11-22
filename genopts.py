@@ -936,7 +936,7 @@ class Backend(object):
         """Generate an expression to get the argc"""
         pass
 
-    def argv(self, index):
+    def argv(self, index = None):
         # type: (Union[int, Expression]) -> Expression
         """Generate an expression to get the index'th argument"""
         pass
@@ -1048,9 +1048,12 @@ class CBackend(Backend):
         # type: () -> Expression
         return V('argc', 'int')
 
-    def argv(self, index):
+    def argv(self, index = None):
         # type: (Union[int, Expression]) -> Expression
-        return V('argv', 'char **')[index]
+        v = V('argv', 'char **')
+        if index is None:
+            return v
+        return v[index]
 
     def slice(self, expr, start):
         # type: (Expression, Expression) -> Expression
