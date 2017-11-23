@@ -118,6 +118,10 @@ class Expression:
         # type: (Variable) -> AccessMemberExpression
         return AccessMemberExpression(self, repr(other))
 
+    def slice(self, index):
+        # type: (Expression) -> SliceExpression
+        return SliceExpression(self, index)
+
     def __getitem__(self, key):
         # type: (Union[int, Expression]) -> VectorElementExpression
         if isinstance(key, int):
@@ -146,6 +150,16 @@ class BinaryExpression(Expression):
     def __repr__(self):
         # type: () -> str
         return '(' + repr(self.left) + ') ' + self.rel + ' (' + repr(self.right) + ')'
+
+class SliceExpression(Expression):
+    def __init__(self, expr, start_index):
+        # type: (Expression, Expression) -> None
+        self.expr = expr
+        self.start_index = start_index
+
+    def __repr__(self):
+        # type: () -> str
+        return '&' + repr(self.expr) + '[' + repr(self.start_index) + ']'
 
 class DirectExpression(Expression):
     def __init__(self, expr):
@@ -862,7 +876,6 @@ class GenerateParserVisitor(Visitor):
         aux = self.context.aux_access
         argc = self.context.backend.argc()
         argv = self.context.backend.argv
-        slice = self.context.backend.slice
         i = self.context.i_var
 
         if n.variadic:
@@ -876,7 +889,7 @@ class GenerateParserVisitor(Visitor):
 
             self.context.aux_var(variadic_field_name, "char **")
 
-            self.positional_action_map.add(self.cur_position, cur_command_idx, aux(variadic_field_name) << slice(argv(), i))
+            self.positional_action_map.add(self.cur_position, cur_command_idx, aux(variadic_field_name) << argv().slice(i))
             self.positional_action_map.add(self.cur_position, cur_command_idx, aux("variadic_argc", "int") << argc - i)
             self.positional_action_map.add(self.cur_position, cur_command_idx, "break;")
         else:
@@ -939,11 +952,6 @@ class Backend(object):
     def argv(self, index = None):
         # type: (Union[int, Expression]) -> Expression
         """Generate an expression to get the index'th argument"""
-        pass
-
-    def slice(self, expr, start):
-        # type: (Expression, Expression) -> Expression
-        """Generate an expression to get a slice an expression"""
         pass
 
 ################################################################################
@@ -1054,10 +1062,6 @@ class CBackend(Backend):
         if index is None:
             return v
         return v[index]
-
-    def slice(self, expr, start):
-        # type: (Expression, Expression) -> Expression
-        return AddressOfExpression(expr[start])
 
 ################################################################################
 
