@@ -1118,7 +1118,7 @@ def genopts(patterns, backend):
         output="static int",
         name="validate_cli",
         input=[cli_var, aux_var])
-    vc.iff(cond="cli->help").then.ret(1)
+    vc.iff(cli_access("help")).then.ret(1)
     write_command_validation(vc, context.command_index_map, context.parent_map, option_with_args)
     navigate(template, GenerateMXValidatorVisitor(vc))
 
