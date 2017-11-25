@@ -1157,11 +1157,13 @@ def genopts(patterns, backend):
         else:
             # Resolve positional arguments
             for pos, arg in enumerate(commands[1]):
+                cmd_name = makecname(arg.command)
+
                 if arg.variadic:
-                    vc.add("cli->{0}_count = aux->variadic_argc;".format(makecname(arg.command)))
-                    vc.add("cli->{0} = aux->variadic_argv;".format(makecname(arg.command)))
+                    vc.add("cli->{0}_count = aux->variadic_argc;".format(cmd_name))
+                    vc.add("cli->{0} = aux->variadic_argv;".format(cmd_name))
                 else:
-                    vc.add("cli->{0} = aux->positional{1};".format(makecname(arg.command), pos))
+                    vc.add("cli->{0} = aux->positional{1};".format(cmd_name, pos))
 
         for a in all_args:
             if a.command not in optional_args:
