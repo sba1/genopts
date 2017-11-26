@@ -1154,7 +1154,7 @@ def genopts(patterns, backend):
             for pos, arg in enumerate(commands[1]):
                 cmd_name = makecname(arg.command)
 
-                then.add(cli_access(cmd_name) << make_expr("aux->positional{0}".format(pos)))
+                then.add(cli_access(cmd_name) << aux_access("positional{0}".format(pos)))
             then.otherwise().add("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
         else:
             # Resolve positional arguments
