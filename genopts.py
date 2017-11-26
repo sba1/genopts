@@ -1150,13 +1150,21 @@ def genopts(patterns, backend):
 
         # FIXME: Generalize
         if not any(a.variadic for a in all_args) and len(all_args) == 2 and len(optional_args) == 1 and all_args[0].command in optional_args:
-            # Resolve optional first arguments
-            then = vc.iff(cond="aux->positional{0} != NULL".format(1)).then
+            # Resolve cases with optional first positional arguments, for now
+            # only in case of two arguments, e.g., [optional] required
+
+            # Check if second positional arg has been set
+            then = vc.iff(aux_access("positional1")).then
+
+            # In this case, we can assign them as indented, i.e., subsequently
             for pos, arg in enumerate(commands[1]):
                 cmd_name = makecname(arg.command)
 
                 then.add(cli_access(cmd_name) << aux_access("positional{0}".format(pos)))
-            then.otherwise().add("cli->{0} = aux->positional{1};".format(makecname(all_args[1].command), 0))
+
+            # But if the second positional arg is not set, the actual first given
+            # positional arg is meant to be the second positional one in the template
+            then.otherwise().add(cli_access(makecname(all_args[1].command)) << aux_access("positional0"))
         else:
             # Resolve positional arguments
             for pos, arg in enumerate(commands[1]):
