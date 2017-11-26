@@ -1150,6 +1150,7 @@ def genopts(patterns, backend):
 
         # FIXME: Generalize
         if not any(a.variadic for a in all_args) and len(all_args) == 2 and len(optional_args) == 1 and all_args[0].command in optional_args:
+            # Resolve optional first arguments
             then = vc.iff(cond="aux->positional{0} != NULL".format(1)).then
             for pos, arg in enumerate(commands[1]):
                 cmd_name = makecname(arg.command)
