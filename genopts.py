@@ -842,7 +842,7 @@ class GenerateParserVisitor(Visitor):
                 self.token_action_map.add(cmd, "}")
                 self.token_action_map.add(cmd, "else")
                 self.token_action_map.add(cmd, "{")
-                self.token_action_map.add(cmd, "cli->{0} = &argv[i][{1}];".format(makecname(n.arg), len(cmd)))
+                self.token_action_map.add(cmd, cli_access(arg_var) << make_expr("&argv[i][{0}]".format(len(cmd))))
                 self.token_action_map.add(cmd, "}")
 
     def visit_option_with_arg(self, n):
