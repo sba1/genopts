@@ -659,20 +659,25 @@ class TokenActionMap:
     def write(self, b):
         # type: (Block) -> None
         sorted_tokens = sorted([t for t in self.token_action_map])
+
+        then = None # type: ThenBlock
         first = True
         for token in sorted_tokens:
             if first:
-                el = ''
+                parent_b = b
                 first = False
             else:
-                el = 'else '
+                parent_b = then.otherwise()
+
             if token in self.token_requires_arg:
                 token_len = len(token)
-                b.add('{0}if (!strncmp("{1}", argv[i], {2}) && (argv[i][{2}]==\'=\' || !argv[i][{2}]))'.format(el, token, token_len - 1))
+                then = parent_b.iff(make_expr('!strncmp("{0}", argv[i], {1}) && (argv[i][{1}]==\'=\' || !argv[i][{1}])'.format(token, token_len - 1 ))).then
             else:
-                b.add('{0}if (!strcmp("{1}", argv[i]))'.format(el, token))
+                then = parent_b.iff(make_expr('!strcmp("{0}", argv[i])'.format(token))).then
 
-            b.add(self.token_action_map[token])
+            for s in self.token_action_map[token].generated_code:
+                then.add(s)
+
 
 class PositionalActionMap:
     """
@@ -996,6 +1001,18 @@ class CBackend(Backend):
             gf.writeline("{0};".format(expand_var(variables.variables[k])))
         gf.writeline("};")
 
+    def write_if(self, gf, iff, otherwise=False):
+        # type: (GenFile, IfStatement, bool) -> None
+        """Write a if statement, possibly connecting it with a previous else case"""
+        gf.writeline('{0}if ({1})'.format("else " if otherwise else "", iff.cond)) # FIXME: This should involve the backend
+        self.write_block(gf, iff.then)
+        if iff.otherwise is not None and len(iff.otherwise.generated_code) != 0:
+            if len(iff.otherwise.generated_code) == 1 and isinstance(iff.otherwise.generated_code[0], IfStatement):
+                self.write_if(gf, iff.otherwise.generated_code[0], True)
+            else:
+                gf.writeline('else')
+                self.write_block(gf, iff.otherwise)
+
     def write_block(self, gf, block):
         # type: (GenFile, Block) -> None
         """Write the given block and its possible descendents to the file"""
@@ -1024,11 +1041,7 @@ class CBackend(Backend):
 
         for l in block.generated_code:
             if isinstance(l, IfStatement):
-                gf.writeline('if ({0})'.format(l.cond)) # FIXME: This should involve the backend
-                self.write_block(gf, l.then)
-                if l.otherwise is not None and len(l.otherwise.generated_code) != 0:
-                    gf.writeline('else')
-                    self.write_block(gf, l.otherwise)
+                self.write_if(gf, l)
             elif isinstance(l, Statement):
                 gf.writeline(repr(l)) # FIXME: This should involve the backend
             elif isinstance(l, Block):
