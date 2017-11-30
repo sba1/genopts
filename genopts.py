@@ -109,6 +109,12 @@ class Expression:
         # type: (Union[Expression, str, int]) -> BinaryExpression
         return BinaryExpression(self, '==', make_expr(other))
 
+    def eq_str(self, other):
+        # type: (Union[Expression, str]) -> EqualsStrExpression
+        if not isinstance(other, Expression):
+            other = '"' + other + '"'
+        return EqualsStrExpression(self, make_expr(other))
+
     # No proper overloading for now
     def ne(self, other):
         # type: (Union[Expression, str, int]) -> BinaryExpression
@@ -201,6 +207,16 @@ class IsFalseExpression(Expression):
     def __repr__(self):
         # type: () -> str
         return "!"  + repr(self.expr)
+
+class EqualsStrExpression(Expression):
+    def __init__(self, arg1, arg2):
+        # type: (Expression, Expression) -> None
+        self.arg1 = arg1
+        self.arg2 = arg2
+
+    def __repr__(self):
+        # type: () -> str
+        return "!strcmp({0}, {1})".format(repr(self.arg1), repr(self.arg2))
 
 def IsFalse(expr):
     # type: (Union[str, Expression]) -> IsFalseExpression
@@ -637,8 +653,9 @@ class TokenActionMap:
     """
     Instances of this class represent token and their actions.
     """
-    def __init__(self):
-        # type: () -> None
+    def __init__(self, context):
+        # type: (GeneratorContext) -> None
+        self.context = context
         self.token_action_map = dict() # type: Dict[str,Block]
         self.token_requires_arg = set() # type: Set[str]
 
@@ -662,6 +679,8 @@ class TokenActionMap:
 
         then = None # type: ThenBlock
         first = True
+        argv = self.context.backend.argv
+        i = self.context.i_var
         for token in sorted_tokens:
             if first:
                 parent_b = b
@@ -673,7 +692,7 @@ class TokenActionMap:
                 token_len = len(token)
                 then = parent_b.iff(make_expr('!strncmp("{0}", argv[i], {1}) && (argv[i][{1}]==\'=\' || !argv[i][{1}])'.format(token, token_len - 1 ))).then
             else:
-                then = parent_b.iff(make_expr('!strcmp("{0}", argv[i])'.format(token))).then
+                then = parent_b.iff(argv(i).eq_str(token)).then
 
             for s in self.token_action_map[token].generated_code:
                 then.add(s)
@@ -734,7 +753,7 @@ class GeneratorContext:
         self.cur_position_var = Variable('cur_position', 'int', '0')
         self.parent_map = ParentMap()
         self.command_index_map = CommandIndexMap()
-        self.token_action_map = TokenActionMap()
+        self.token_action_map = TokenActionMap(self)
         self.positional_action_map = PositionalActionMap()
 
         # Variables/Parameters used in some functions

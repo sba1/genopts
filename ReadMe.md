@@ -133,27 +133,27 @@ static int parse_cli_simple(int argc, char **argv, struct cli *cli, struct cli_a
 	int cur_command = -1;
 	for (i=0; i < argc; i++)
 	{
-		if (!strcmp("--dry-run", argv[i]))
+		if (!strcmp(argv[i], "--dry-run"))
 		{
 			cli->dry_run = 1;
 			aux->dry_run_cmd = cur_command;
 		}
-		else if (!strcmp("--fast", argv[i]))
+		else if (!strcmp(argv[i], "--fast"))
 		{
 			cli->fast = 1;
 			aux->fast_cmd = cur_command;
 		}
-		else if (!strcmp("--help", argv[i]))
+		else if (!strcmp(argv[i], "--help"))
 		{
 			cli->help = 1;
 			aux->help_cmd = cur_command;
 		}
-		else if (!strcmp("-n", argv[i]))
+		else if (!strcmp(argv[i], "-n"))
 		{
 			cli->n = 1;
 			aux->n_cmd = cur_command;
 		}
-		else if (!strcmp("sync", argv[i]))
+		else if (!strcmp(argv[i], "sync"))
 		{
 			cli->sync = 1;
 			aux->sync_pos = i;
