@@ -855,19 +855,14 @@ class GenerateParserVisitor(Visitor):
 
             if cmd_requires_arg:
                 self.token_action_map.add(cmd, "")
-                self.token_action_map.add(cmd, "if (!argv[i][{0}])".format(len(cmd) - 1))
-                self.token_action_map.add(cmd, "{")
-                self.token_action_map.add(cmd).iff(i + 1 < argc).then. \
+                if_no_direct_arg = self.token_action_map.add(cmd).iff(cond="!argv[i][{0}]".format(len(cmd) - 1)).then
+                if_no_direct_arg.iff(i + 1 < argc).then. \
                     add(cli_access(arg_var) << argv(i + 1)). \
                     inc(i).\
                     otherwise(). \
                     printerr("Argument \\\"{0}\\\" requires a value\\n".format(cmd)). \
                     ret(0)
-                self.token_action_map.add(cmd, "}")
-                self.token_action_map.add(cmd, "else")
-                self.token_action_map.add(cmd, "{")
-                self.token_action_map.add(cmd, cli_access(arg_var) << make_expr("&argv[i][{0}]".format(len(cmd))))
-                self.token_action_map.add(cmd, "}")
+                if_no_direct_arg.otherwise().add(cli_access(arg_var) << argv(i).slice(make_expr(len(cmd))))
 
     def visit_option_with_arg(self, n):
         # type: (OptionWithArg) -> None
