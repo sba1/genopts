@@ -908,17 +908,19 @@ class GenerateParserVisitor(Visitor):
 
             self.context.aux_var(variadic_field_name, "char **")
 
-            self.positional_action_map.add(self.cur_position, cur_command_idx, aux(variadic_field_name) << argv().slice(i))
-            self.positional_action_map.add(self.cur_position, cur_command_idx, aux("variadic_argc", "int") << argc - i)
-            self.positional_action_map.add(self.cur_position, cur_command_idx, "break;")
+            self.positional_action_map.add(self.cur_position, cur_command_idx). \
+                add(aux(variadic_field_name) << argv().slice(i)). \
+                add(aux("variadic_argc", "int") << argc - i). \
+                add("break;")
         else:
             self.context.cli_var(field_name, "char *")
 
             # Use helper fields, the real one will be set in the validation phase
             positional_field_name = 'positional{0}'.format(self.cur_position)
 
-            self.positional_action_map.add(self.cur_position, cur_command_idx).add(aux(positional_field_name, "char *") << argv(i))
-            self.positional_action_map.add(self.cur_position, cur_command_idx).inc(self.context.cur_command_var)
+            self.positional_action_map.add(self.cur_position, cur_command_idx). \
+                add(aux(positional_field_name, "char *") << argv(i)). \
+                inc(self.context.cur_command_var)
 
             self.cur_position = self.cur_position + 1
 
