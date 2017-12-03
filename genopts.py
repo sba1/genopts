@@ -336,6 +336,10 @@ class Block(object):
         self.add(if_then_else)
         return if_then_else
 
+    def brk(self):
+        # type: () -> None
+        self.add('break;')
+
 class ThenBlock(Block):
     def __init__(self, otherwise_block):
         # type: (Block) -> None
@@ -911,7 +915,7 @@ class GenerateParserVisitor(Visitor):
             self.positional_action_map.add(self.cur_position, cur_command_idx). \
                 add(aux(variadic_field_name) << argv().slice(i)). \
                 add(aux("variadic_argc", "int") << argc - i). \
-                add("break;")
+                brk()
         else:
             self.context.cli_var(field_name, "char *")
 
