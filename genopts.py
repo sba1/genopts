@@ -62,6 +62,16 @@ class ReturnStatement(Statement):
         # type: () -> str
         return "return {0};".format(repr(self.expr))
 
+class BreakStatement(Statement):
+    """A break statement emits an instruction to leave the most inner loop quickly"""
+    def __init__(self):
+        # type: () -> None
+        pass
+
+    def __repr__(self):
+        # type: () -> str
+        return "break;"
+
 class PrintErrorStatement(Statement):
     """A statement to print an error message"""
     def __init__(self, msg, *args):
@@ -338,7 +348,7 @@ class Block(object):
 
     def brk(self):
         # type: () -> None
-        self.add('break;')
+        self.add(BreakStatement())
 
 class ThenBlock(Block):
     def __init__(self, otherwise_block):
