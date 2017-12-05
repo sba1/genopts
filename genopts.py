@@ -1010,7 +1010,21 @@ def expand_var(var):
         space = ''
     return '{0}{1}{2}'.format(t, space, var.name)
 
-class CBackend(Backend):
+class CLikeMultilineCommentsBackend(Backend):
+    def write_multiline_comment(self, gf, comment):
+        # type: (GenFile, str) -> None
+        """Write a multiline comment to the given file"""
+        comment = textwrap.dedent(comment)
+        gf.writeline("/**")
+        for l in comment.split("\n"):
+            l = l.strip()
+            if len(l) != 0:
+                gf.writeline(" * " + l)
+            else:
+                gf.writeline(" *")
+        gf.writeline(" */")
+
+class CBackend(CLikeMultilineCommentsBackend):
     def __init__(self):
         #type: () -> None
         super(CBackend, self).__init__()
@@ -1081,19 +1095,6 @@ class CBackend(Backend):
 
         if isinstance(block, Function) or isinstance(block, Block):
             gf.writeline('}')
-
-    def write_multiline_comment(self, gf, comment):
-        # type: (GenFile, str) -> None
-        """Write a multiline comment to the given file"""
-        comment = textwrap.dedent(comment)
-        gf.writeline("/**")
-        for l in comment.split("\n"):
-            l = l.strip()
-            if len(l) != 0:
-                gf.writeline(" * " + l)
-            else:
-                gf.writeline(" *")
-        gf.writeline(" */")
 
     def argc(self):
         # type: () -> Expression
