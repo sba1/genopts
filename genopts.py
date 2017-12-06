@@ -959,11 +959,11 @@ class CommandArgPairs():
 
 class Backend(object):
     def __init__(self):
-        #type: () -> None
+        # type: () -> None
         pass
 
     def write_variables(self, gf, variables):
-        #type: (GenFile, Variables) -> None
+        # type: (GenFile, Variables) -> None
         pass
 
     def write_header(self, gf):
@@ -1026,7 +1026,7 @@ class CLikeMultilineCommentsBackend(Backend):
 
 class CBackend(CLikeMultilineCommentsBackend):
     def __init__(self):
-        #type: () -> None
+        # type: () -> None
         super(CBackend, self).__init__()
 
     def write_header(self, gf):
@@ -1036,7 +1036,7 @@ class CBackend(CLikeMultilineCommentsBackend):
         gf.writeline()
 
     def write_variables(self, gf, variables):
-        #type: (GenFile, Variables) -> None
+        # type: (GenFile, Variables) -> None
         sorted_field_names = sorted([k for k in variables.variables])
 
         gf.writeline("struct {0}".format(variables.name))
