@@ -1113,6 +1113,39 @@ class CBackend(CLikeMultilineCommentsBackend):
 
 ################################################################################
 
+def expand_java_var(var):
+    # type: (Variable) -> str
+    t = var.vtype
+    space = ' '
+    if t == 'char *':
+        t = 'String'
+    return '{0}{1}{2}'.format(t, space, var.name)
+
+
+# TODO: For now we inherit from CBackend and overwrite some methods, we will
+# change that later
+class JavaBackend(CBackend):
+    def __init__(self):
+        # type: () -> None
+        super(JavaBackend, self).__init__()
+
+    def write_header(self, gf):
+        # type: (GenFile) -> None
+        pass
+
+    def write_variables(self, gf, variables):
+        # type: (GenFile, Variables) -> None
+        sorted_field_names = sorted([k for k in variables.variables])
+
+        gf.writeline("class {0}".format(variables.name))
+        gf.writeline("{")
+        for k in sorted_field_names:
+            gf.writeline("{0};".format(expand_java_var(variables.variables[k])))
+        gf.writeline("};")
+
+
+################################################################################
+
 def genopts(patterns, backend):
     # type: (List[str], Backend)->None
     parse_trees = [parse_pattern(p.strip()) for p in patterns]
@@ -1331,7 +1364,12 @@ def main():
     lines = sys.stdin.readlines()
     if len(lines) < 1:
         sys.exit("Input must contain at least one line")
-    genopts(lines, CBackend())
+    backend = None # type: Backend
+    if len(sys.argv) > 1 and sys.argv[1] == '--java':
+        backend = JavaBackend()
+    else:
+        backend = CBackend()
+    genopts(lines, backend)
 
 if __name__ == "__main__":
     main()
