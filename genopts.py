@@ -1011,6 +1011,10 @@ def expand_var(var):
     return '{0}{1}{2}'.format(t, space, var.name)
 
 class CLikeMultilineCommentsBackend(Backend):
+    def __init__(self):
+        # type: () -> None
+        super(CLikeMultilineCommentsBackend, self).__init__()
+
     def write_multiline_comment(self, gf, comment):
         # type: (GenFile, str) -> None
         """Write a multiline comment to the given file"""
