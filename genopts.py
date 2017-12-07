@@ -1092,6 +1092,8 @@ class CBackend(CLikeMultilineCommentsBackend):
                 self.write_if(gf, l)
             elif isinstance(l, DirectStatement):
                 gf.writeline(l.st)
+            elif isinstance(l, ReturnStatement):
+                gf.writeline("return {0};".format(self.translate(l.expr)))
             elif isinstance(l, Statement):
                 gf.writeline(repr(l)) # FIXME: This should involve the backend
             elif isinstance(l, Block):
@@ -1101,6 +1103,12 @@ class CBackend(CLikeMultilineCommentsBackend):
 
         if isinstance(block, Function) or isinstance(block, Block):
             gf.writeline('}')
+
+    def translate(self, expr):
+        # type: (Expression) -> str
+        """Translates the given expresison to the langauage"""
+        # TODO: Write proper translator
+        return repr(expr)
 
     def argc(self):
         # type: () -> Expression
