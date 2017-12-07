@@ -1094,6 +1094,11 @@ class CBackend(CLikeMultilineCommentsBackend):
                 gf.writeline(l.st)
             elif isinstance(l, ReturnStatement):
                 gf.writeline("return {0};".format(self.translate(l.expr)))
+            elif isinstance(l, PrintErrorStatement):
+                args = ""
+                if len(l.args):
+                    args = ", " + ", ".join([repr(e) for e in l.args])
+                gf.writeline("fprintf(stderr, \"{0}\"{1});".format(l.msg, args))
             elif isinstance(l, Statement):
                 gf.writeline(repr(l)) # FIXME: This should involve the backend
             elif isinstance(l, Block):
