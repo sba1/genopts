@@ -1090,6 +1090,8 @@ class CBackend(CLikeMultilineCommentsBackend):
         for l in block.generated_code:
             if isinstance(l, IfStatement):
                 self.write_if(gf, l)
+            elif isinstance(l, DirectStatement):
+                gf.writeline(l.st)
             elif isinstance(l, Statement):
                 gf.writeline(repr(l)) # FIXME: This should involve the backend
             elif isinstance(l, Block):
