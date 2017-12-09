@@ -979,6 +979,10 @@ class Backend(object):
         # type: (GenFile, str) -> None
         pass
 
+    def write_print_statement(self, gf, l):
+        # type: (GenFile, PrintErrorStatement) -> None
+        pass
+
     def argc(self):
         # type: () -> Expression
         """Generate an expression to get the argc"""
