@@ -979,8 +979,8 @@ class Backend(object):
         # type: (GenFile, str) -> None
         pass
 
-    def write_print_statement(self, gf, l):
-        # type: (GenFile, PrintErrorStatement) -> None
+    def write_print_statement(self, gf, msg, args):
+        # type: (GenFile, str, List[str]) -> None
         pass
 
     def argc(self):
