@@ -1166,6 +1166,12 @@ class JavaBackend(CBackend):
             gf.writeline("{0};".format(expand_java_var(variables.variables[k])))
         gf.writeline("};")
 
+    def write_print_statement(self, gf, msg, args):
+        # type: (GenFile, str, List[str]) -> None
+        cargs = ""
+        if len(args):
+            cargs = ", " + ", ".join(args)
+        gf.writeline("System.err.print(\"{0}\"{1});".format(msg, cargs))
 
 ################################################################################
 
