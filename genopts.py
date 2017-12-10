@@ -1099,7 +1099,7 @@ class CBackend(CLikeMultilineCommentsBackend):
             elif isinstance(l, ReturnStatement):
                 gf.writeline("return {0};".format(self.translate(l.expr)))
             elif isinstance(l, PrintErrorStatement):
-                self.write_print_statement(gf, l)
+                self.write_print_statement(gf, l.msg, [repr(e) for e in l.args])
             elif isinstance(l, Statement):
                 gf.writeline(repr(l)) # FIXME: This should involve the backend
             elif isinstance(l, Block):
@@ -1110,12 +1110,12 @@ class CBackend(CLikeMultilineCommentsBackend):
         if isinstance(block, Function) or isinstance(block, Block):
             gf.writeline('}')
 
-    def write_print_statement(self, gf, l):
-        # type: (GenFile, PrintErrorStatement) -> None
-        args = ""
-        if len(l.args):
-            args = ", " + ", ".join([repr(e) for e in l.args])
-        gf.writeline("fprintf(stderr, \"{0}\"{1});".format(l.msg, args))
+    def write_print_statement(self, gf, msg, args):
+        # type: (GenFile, str, List[str]) -> None
+        cargs = ""
+        if len(args):
+            cargs = ", " + ", ".join(args)
+        gf.writeline("fprintf(stderr, \"{0}\"{1});".format(msg, cargs))
 
     def translate(self, expr):
         # type: (Expression) -> str
