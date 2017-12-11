@@ -970,6 +970,10 @@ class Backend(object):
         # type: (GenFile) -> None
         pass
 
+    def write_footer(self, gf):
+        # type: (GenFile) -> None
+        pass
+
     def write_block(self, gf, block):
         # type: (GenFile, Block) -> None
         """Write the given block and its possible descendents to the file"""
@@ -1386,6 +1390,7 @@ def genopts(patterns, backend):
     backend.write_block(gf, pc)
 
     gf.writeline()
+    backend.write_footer(gf)
     gf.flush()
 
 def main():
