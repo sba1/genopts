@@ -1184,6 +1184,16 @@ class JavaBackend(CBackend):
             cargs = ", " + ", ".join(args)
         gf.writeline("System.err.print(\"{0}\"{1});".format(msg, cargs))
 
+    def translate(self, expr):
+        # type: (Expression) -> str
+        """Translates the given expresison to the langauage"""
+        if isinstance(expr, AccessMemberExpression):
+            return '{0}.{1}'.format(self.translate(expr.obj), expr.member)
+        elif isinstance(expr, AssignmentExpression):
+            return '{0} = {1}'.format(self.translate(expr.left), self.translate(expr.right))
+        else:
+            return repr(expr)
+
 ################################################################################
 
 def genopts(patterns, backend):
