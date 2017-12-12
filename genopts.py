@@ -1158,7 +1158,12 @@ class JavaBackend(CBackend):
 
     def write_header(self, gf):
         # type: (GenFile) -> None
-        pass
+        gf.writeline("public class CliParser")
+        gf.writeline("{")
+
+    def write_footer(self, gf):
+        # type: (GenFile) -> None
+        gf.writeline("}")
 
     def write_variables(self, gf, variables):
         # type: (GenFile, Variables) -> None
