@@ -1081,9 +1081,7 @@ class CBackend(CLikeMultilineCommentsBackend):
             for i in block.input:
                 inputs.append(expand_var(i))
             gf.writeline("{0} {1}({2})".format(block.output, block.name, ", ".join(inputs)))
-            gf.writeline('{')
-        elif isinstance(block, Block):
-            gf.writeline('{')
+        gf.writeline('{')
 
         for vname in block.locals.variables:
             v = block.locals[vname]
@@ -1113,8 +1111,7 @@ class CBackend(CLikeMultilineCommentsBackend):
             elif isinstance(l, Function):
                 self.write_block(gf, l)
 
-        if isinstance(block, Function) or isinstance(block, Block):
-            gf.writeline('}')
+        gf.writeline('}')
 
     def write_print_statement(self, gf, msg, args):
         # type: (GenFile, str, List[str]) -> None
