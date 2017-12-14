@@ -1023,6 +1023,10 @@ class CLikeMultilineCommentsBackend(Backend):
         # type: () -> None
         super(CLikeMultilineCommentsBackend, self).__init__()
 
+    def expand_var(self, var):
+        # type: (Variable) -> str
+        return expand_var(var)
+
     def write_multiline_comment(self, gf, comment):
         # type: (GenFile, str) -> None
         """Write a multiline comment to the given file"""
@@ -1079,7 +1083,7 @@ class CBackend(CLikeMultilineCommentsBackend):
                 self.write_multiline_comment(gf, block.description)
 
             for i in block.input:
-                inputs.append(expand_var(i))
+                inputs.append(self.expand_var(i))
             gf.writeline("{0} {1}({2})".format(block.output, block.name, ", ".join(inputs)))
         gf.writeline('{')
 
@@ -1154,6 +1158,10 @@ class JavaBackend(CBackend):
     def __init__(self):
         # type: () -> None
         super(JavaBackend, self).__init__()
+
+    def expand_var(self, var):
+        # type: (Variable) -> str
+        return expand_java_var(var)
 
     def write_header(self, gf):
         # type: (GenFile) -> None
