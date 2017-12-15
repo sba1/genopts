@@ -1178,7 +1178,7 @@ class JavaBackend(CBackend):
         # type: (GenFile, Variables) -> None
         sorted_field_names = sorted([k for k in variables.variables])
 
-        gf.writeline("class {0}".format(variables.name))
+        gf.writeline("public static class {0}".format(variables.name))
         gf.writeline("{")
         for k in sorted_field_names:
             gf.writeline("{0};".format(expand_java_var(variables.variables[k])))
