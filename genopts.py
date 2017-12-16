@@ -1149,6 +1149,8 @@ def expand_java_var(var):
     space = ' '
     if t == 'char *':
         t = 'String'
+    elif t == 'char **':
+        t = 'String []'
     elif t.startswith('struct ') and t.endswith('*'):
         t = t[7:-2]
     return '{0}{1}{2}'.format(t, space, var.name)
