@@ -3,6 +3,8 @@ GENOPTS=$(wildcard *genopts)
 TEST_GENOPTS_SRCS=$(GENOPTS:%.genopts=test_%_cli.c)
 TEST_GENOPTS=$(TEST_GENOPTS_SRCS:%.c=%)
 
+TEST_GENOPTS_JAVA_SRCS=$(GENOPTS:%.genopts=test_%_cli.java)
+
 .PHONY: all
 all: type-check check test
 
@@ -21,6 +23,10 @@ $(TEST_GENOPTS_SRCS): test_%_cli.c: %.genopts genopts.py
 # Generate a single executable for the given cli source file
 $(TEST_GENOPTS): test_%_cli: test_%_cli.c test.c
 	gcc -ggdb -include $< test.c -o $@
+
+# Generate java source file for a genopts file
+$(TEST_GENOPTS_JAVA_SRCS): test_%_cli.java: %.genopts genopts.py
+	cat $< | ./genopts.py --java >$@
 
 # Generate a main executable that should be paramterized via all included
 # genopts
