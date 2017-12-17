@@ -4,6 +4,7 @@ TEST_GENOPTS_SRCS=$(GENOPTS:%.genopts=test_%_cli.c)
 TEST_GENOPTS=$(TEST_GENOPTS_SRCS:%.c=%)
 
 TEST_GENOPTS_JAVA_SRCS=$(GENOPTS:%.genopts=test_%_cli.java)
+TEST_GENOPTS_JAVA_CLASSES=$(GENOPTS:%.genopts=test_%_cli.class)
 
 .PHONY: all
 all: type-check check test
@@ -27,6 +28,9 @@ $(TEST_GENOPTS): test_%_cli: test_%_cli.c test.c
 # Generate java source file for a genopts file
 $(TEST_GENOPTS_JAVA_SRCS): test_%_cli.java: %.genopts genopts.py
 	cat $< | ./genopts.py --java >$@
+
+$(TEST_GENOPTS_JAVA_CLASSES): test_%_cli.class: test_%_cli.java
+	javac $<
 
 # Generate a main executable that should be paramterized via all included
 # genopts
