@@ -962,6 +962,10 @@ class Backend(object):
         # type: () -> None
         pass
 
+    def write_enum(self, gf, name, fields):
+        # type: (GenFile, str, List[Tuple[str,int]]) -> None
+        pass
+
     def write_variables(self, gf, variables):
         # type: (GenFile, Variables) -> None
         pass
@@ -1052,7 +1056,7 @@ class CBackend(CLikeMultilineCommentsBackend):
         gf.writeline()
 
     def write_enum(self, gf, name, fields):
-        # type: (GenFile, str, List[Tuple(str,int)])
+        # type: (GenFile, str, List[Tuple[str,int]]) -> None
         gf.writeline("typedef enum")
         gf.writeline("{")
         for f in fields:
@@ -1186,7 +1190,7 @@ class JavaBackend(CBackend):
         gf.writeline("}")
 
     def write_enum(self, gf, name, fields):
-        # type: (GenFile, str, List[Tuple(str,int)])
+        # type: (GenFile, str, List[Tuple[str,int]]) -> None
         gf.writeline("public static class {0}".format(name))
         gf.writeline("{")
         for f in fields:
