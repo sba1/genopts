@@ -2,6 +2,8 @@
 ReadMe.md.new
 sync_cli.c
 test_*cli.c
+test_*cli.java
+test_*cli.class
 test_*cli
 test
 *.pyc
