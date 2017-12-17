@@ -65,8 +65,8 @@ struct cli_aux
 
 typedef enum
 {
-	POF_VALIDATE = (1<<0),
-	POF_USAGE = (1<<1)
+	POF_VALIDATE = 1,
+	POF_USAGE = 2,
 } parse_cli_options_t;
 
 static int validate_cli(struct cli *cli, struct cli_aux *aux)

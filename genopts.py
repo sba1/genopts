@@ -1051,6 +1051,15 @@ class CBackend(CLikeMultilineCommentsBackend):
         gf.writeline("#include <string.h>")
         gf.writeline()
 
+    def write_enum(self, gf, name, fields):
+        # type: (GenFile, str, List[Tuple(str,int)])
+        gf.writeline("typedef enum")
+        gf.writeline("{")
+        for f in fields:
+            gf.writeline("{0} = {1},".format(f[0], f[1]))
+        gf.writeline("}} {0};".format(name))
+        gf.writeline()
+
     def write_variables(self, gf, variables):
         # type: (GenFile, Variables) -> None
         sorted_field_names = sorted([k for k in variables.variables])
@@ -1246,12 +1255,11 @@ def genopts(patterns, backend):
     backend.write_variables(gf, context.aux_vars)
     gf.writeline()
 
-    gf.writeline("typedef enum")
-    gf.writeline("{")
-    gf.writeline("POF_VALIDATE = (1<<0),")
-    gf.writeline("POF_USAGE = (1<<1)")
-    gf.writeline("} parse_cli_options_t;")
-    gf.writeline()
+    backend.write_enum(gf, 'parse_cli_options_t',
+            [
+            ('POF_VALIDATE', 1<<0),
+            ('POF_USAGE', 1<<1)
+            ])
 
     # Generates the validation function
     vc = Function(
