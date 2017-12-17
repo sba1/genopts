@@ -1185,6 +1185,22 @@ class JavaBackend(CBackend):
         # type: (GenFile) -> None
         gf.writeline("}")
 
+    def write_enum(self, gf, name, fields):
+        # type: (GenFile, str, List[Tuple(str,int)])
+        gf.writeline("public static class {0}".format(name))
+        gf.writeline("{")
+        for f in fields:
+            gf.writeline("public static final int {0} = {1},".format(f[0], f[1]))
+        gf.writeline();
+        gf.writeline("public final int value;");
+        gf.writeline();
+        gf.writeline("public {0}(int value)".format(name))
+        gf.writeline("{")
+        gf.writeline("this.value = value;")
+        gf.writeline("}")
+        gf.writeline("};")
+        gf.writeline()
+
     def write_variables(self, gf, variables):
         # type: (GenFile, Variables) -> None
         sorted_field_names = sorted([k for k in variables.variables])
