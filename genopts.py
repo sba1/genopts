@@ -1234,8 +1234,8 @@ class JavaBackend(CBackend):
 
 ################################################################################
 
-def genopts(patterns, backend):
-    # type: (List[str], Backend)->None
+def genopts(patterns, backend, dont_skip_first_arg):
+    # type: (List[str], Backend, bool)->None
     parse_trees = [parse_pattern(p.strip()) for p in patterns]
     template = Template(parse_trees)
     #print(template)
@@ -1434,8 +1434,11 @@ def genopts(patterns, backend):
 
     aux_var = pc.locals.add("aux", "struct cli_aux", "{0}")
     cmd_var = pc.locals.add("cmd", "char *", argv_var[0])
-    pc.dec(argc_var)
-    pc.inc(argv_var)
+
+    if not dont_skip_first_arg:
+        pc.dec(argc_var)
+        pc.inc(argv_var)
+
     pc.iff(cond="!parse_cli_simple(argc, argv, cli, &aux)").then.ret(0)
     pc.iff(cond="opts & POF_VALIDATE").then. \
         iff(cond="!validate_cli(cli, &aux)").then.ret(0)
@@ -1452,12 +1455,20 @@ def main():
     lines = sys.stdin.readlines()
     if len(lines) < 1:
         sys.exit("Input must contain at least one line")
+
     backend = None # type: Backend
-    if len(sys.argv) > 1 and sys.argv[1] == '--java':
-        backend = JavaBackend()
-    else:
+    dont_skip_first_arg = False
+
+    for o in sys.argv[1:]:
+        if o == '--java':
+            backend = JavaBackend()
+        elif o == '--dont-skip_first_arg':
+            dont_skip_first_arg = True
+
+    if backend is None:
         backend = CBackend()
-    genopts(lines, backend)
+
+    genopts(lines, backend, dont_skip_first_arg)
 
 if __name__ == "__main__":
     main()
