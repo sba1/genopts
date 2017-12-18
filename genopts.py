@@ -1194,7 +1194,7 @@ class JavaBackend(CBackend):
         gf.writeline("public static class {0}".format(name))
         gf.writeline("{")
         for f in fields:
-            gf.writeline("public static final int {0} = {1},".format(f[0], f[1]))
+            gf.writeline("public static final int {0} = {1};".format(f[0], f[1]))
         gf.writeline();
         gf.writeline("public final int value;");
         gf.writeline();
