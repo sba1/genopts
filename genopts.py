@@ -1462,7 +1462,7 @@ def main():
     for o in sys.argv[1:]:
         if o == '--java':
             backend = JavaBackend()
-        elif o == '--dont-skip_first_arg':
+        elif o == '--dont-skip-first-arg':
             dont_skip_first_arg = True
 
     if backend is None:
