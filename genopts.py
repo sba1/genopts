@@ -934,7 +934,7 @@ class GenerateParserVisitor(Visitor):
 
             self.positional_action_map.add(self.cur_position, cur_command_idx). \
                 add(aux(positional_field_name, "char *") << argv(i)). \
-                inc(self.context.cur_command_var)
+                inc(self.context.cur_position_var)
 
             self.cur_position = self.cur_position + 1
 
