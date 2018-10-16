@@ -11,7 +11,7 @@ all: type-check check test
 
 .PHONY: type-check
 type-check:
-	mypy --disallow-untyped-defs --py2 *.py
+	mypy --disallow-untyped-defs --no-strict-optional --py2 *.py
 
 .PHONY: check
 check:
